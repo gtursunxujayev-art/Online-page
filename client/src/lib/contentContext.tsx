@@ -112,7 +112,7 @@ export const defaultContent: ContentState = {
       "Fikrlarimni tizimli yetkazish",
       "Ishonchli, ravon va ta’sirchan nutq"
     ],
-    heroImage: "https://ibb.co/tMYzKFby"
+    heroImage: "https://i.ibb.co/3ySvdQ0t/photo-2025-12-06-18-38-33.jpg"
   },
   painPoints: {
     titlePart1: "Sizga tanish",
@@ -159,8 +159,8 @@ export const defaultContent: ContentState = {
     titleHighlight: "Mentorlar",
     description: "Sizga o‘z sohasining eng kuchli mutaxassislari ustozlik qiladi.",
     items: [
-      { name: "Aziz Rahimov", role: "Bosh Mentor", bio: "20+ yil tajribaga ega notiq. Xalqaro konferensiyalar spikeri. 5000+ o‘quvchilarni o‘qitgan.", image: "https://ibb.co/JW3hXms6" },
-      { name: "Malika Karimova", role: "Biznes Trener", bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.", image: "https://ibb.co/JYG60P5" }
+      { name: "Aziz Rahimov", role: "Bosh Mentor", bio: "20+ yil tajribaga ega notiq. Xalqaro konferensiyalar spikeri. 5000+ o‘quvchilarni o‘qitgan.", image: "https://i.ibb.co/rKdWnFw8/photo-2025-12-06-18-49-59.jpg" },
+      { name: "Malika Karimova", role: "Biznes Trener", bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.", image: "https://i.ibb.co/b4Cwqnz/photo-2025-12-06-18-51-08.jpg" }
     ]
   },
   testimonials: {
