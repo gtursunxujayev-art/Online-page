@@ -1,54 +1,24 @@
 import { motion } from "framer-motion";
 import { Calendar, CheckCircle2 } from "lucide-react";
-
-const weeks = [
-  {
-    week: "1-hafta",
-    title: "Poydevor va Psixologiya",
-    topics: ["Sahna qo‘rquvi diagnostikasi", "O‘ziga ishonch psixologiyasi", "Notiqlikning oltin qoidalari"]
-  },
-  {
-    week: "2-hafta",
-    title: "Ovoz va Tana Tili",
-    topics: ["Diafragma orqali nafas olish", "Diksiya va artikulyatsiya", "Jestlar va nigohlar bilan ishlash"]
-  },
-  {
-    week: "3-hafta",
-    title: "Nutq Strukturasi",
-    topics: ["Fikrni tizimlash (Skelet metodi)", "Kirish, Asosiy qism, Xulosa", "Argumentlash san'ati"]
-  },
-  {
-    week: "4-hafta",
-    title: "Storytelling va Ta'sir",
-    topics: ["Hikoya so‘zlash (Storytelling)", "Auditoriya bilan ishlash", "Qiyin savollarga javob berish"]
-  },
-  {
-    week: "5-hafta",
-    title: "Maxsus Texnikalar",
-    topics: ["SPIN va FAB metodlari", "Debatlar va muzokaralar", "Kamera oldida ishlash"]
-  },
-  {
-    week: "6-hafta",
-    title: "Yakuniy Imtihon",
-    topics: ["Katta sahnadagi chiqish", "Individual feedback", "Sertifikatlash"]
-  }
-];
+import { useContent } from "@/lib/contentContext";
 
 export default function Program() {
+  const { content } = useContent();
+
   return (
     <section id="program" className="py-24 bg-navy-50 dark:bg-navy-900/50">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-navy-900 dark:text-white mb-4">
-            6 Haftalik <span className="text-gold-600">Professional Dastur</span>
+            {content.program.titlePart1} <span className="text-gold-600">{content.program.titleHighlight}</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Nazariyadan amaliyotga bosqichma-bosqich o‘tish tizimi.
+            {content.program.description}
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {weeks.map((item, i) => (
+          {content.program.weeks.map((item, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}

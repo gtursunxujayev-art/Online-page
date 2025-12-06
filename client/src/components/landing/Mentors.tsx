@@ -1,38 +1,24 @@
 import { motion } from "framer-motion";
-import mentor1 from "@assets/generated_images/portrait_of_a_senior_male_public_speaker_mentor..png";
-import mentor2 from "@assets/generated_images/portrait_of_a_female_business_communication_coach..png";
 import { Linkedin, Instagram } from "lucide-react";
-
-const mentors = [
-  {
-    name: "Aziz Rahimov",
-    role: "Bosh Mentor",
-    bio: "20+ yil tajribaga ega notiq. Xalqaro konferensiyalar spikeri. 5000+ o‘quvchilarni o‘qitgan.",
-    image: mentor1 
-  },
-  {
-    name: "Malika Karimova",
-    role: "Biznes Trener",
-    bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.",
-    image: mentor2
-  }
-];
+import { useContent } from "@/lib/contentContext";
 
 export default function Mentors() {
+  const { content } = useContent();
+
   return (
     <section id="mentors" className="py-24 bg-white dark:bg-navy-950">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-navy-900 dark:text-white mb-4">
-            Tajribali <span className="text-gold-600">Mentorlar</span>
+            {content.mentors.titlePart1} <span className="text-gold-600">{content.mentors.titleHighlight}</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Sizga o‘z sohasining eng kuchli mutaxassislari ustozlik qiladi.
+            {content.mentors.description}
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-          {mentors.map((mentor, i) => (
+          {content.mentors.items.map((mentor, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0.95 }}

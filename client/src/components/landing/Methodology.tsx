@@ -1,30 +1,12 @@
 import { motion } from "framer-motion";
 import { Check, Mic, Brain, Sparkles, Volume2, Timer } from "lucide-react";
+import { useContent } from "@/lib/contentContext";
 
-const methods = [
-  {
-    icon: Brain,
-    title: "Psixologik tayyorgarlik",
-    desc: "Sahna qo‘rquvini yo‘qotish bo‘yicha maxsus psixologik mashqlar va texnikalar."
-  },
-  {
-    icon: Volume2,
-    title: "Ovoz va Diksiya",
-    desc: "Notiq ovozini qurish, to‘g‘ri nafas olish, pauza va ritmni boshqarish."
-  },
-  {
-    icon: Timer,
-    title: "30 Sekund Qoidasi",
-    desc: "Fikrni 30 sekundda aniq, lo‘nda va ta’sirchan ifodalash metodlari."
-  },
-  {
-    icon: Sparkles,
-    title: "Storytelling",
-    desc: "Empatiya uyg‘otish, hikoya qilish va auditoriyani ishontirish san'ati."
-  }
-];
+const iconMap = [Brain, Volume2, Timer, Sparkles];
 
 export default function Methodology() {
+  const { content } = useContent();
+
   return (
     <section id="methodology" className="py-24 bg-white dark:bg-navy-950 overflow-hidden">
       <div className="container mx-auto px-4">
@@ -37,29 +19,32 @@ export default function Methodology() {
             className="space-y-8"
           >
             <div className="inline-block px-4 py-1 rounded-full bg-navy-50 text-navy-900 text-sm font-bold uppercase tracking-wider">
-              Bizning yondashuv
+              {content.methodology.badge}
             </div>
             
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-navy-900 dark:text-white leading-tight">
-              Biz sizni qanday <span className="text-gold-600">o‘zgartiramiz?</span>
+              {content.methodology.titlePart1} <span className="text-gold-600">{content.methodology.titleHighlight}</span>
             </h2>
             
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Nazariya va amaliyotning mukammal uyg‘unligi. Biz shunchaki leksiya o‘qimaymiz, biz sizni haqiqiy notiqqa aylantiramiz.
+              {content.methodology.description}
             </p>
 
             <div className="grid sm:grid-cols-2 gap-6 pt-4">
-              {methods.map((item, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gold-100 dark:bg-gold-900/20 flex items-center justify-center text-gold-600">
-                    <item.icon size={24} />
+              {content.methodology.items.map((item, i) => {
+                const Icon = iconMap[i % iconMap.length];
+                return (
+                  <div key={i} className="flex gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gold-100 dark:bg-gold-900/20 flex items-center justify-center text-gold-600">
+                      <Icon size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-navy-900 dark:text-white mb-1">{item.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-navy-900 dark:text-white mb-1">{item.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
 
@@ -74,8 +59,8 @@ export default function Methodology() {
                <div className="absolute inset-0 bg-gradient-to-br from-navy-800 to-black opacity-80" />
                <div className="absolute inset-0 flex items-center justify-center">
                  <div className="text-center p-8">
-                   <div className="text-6xl font-bold text-gold-500 mb-2">1000+</div>
-                   <div className="text-xl text-white font-medium">Muvaffaqiyatli bitiruvchilar</div>
+                   <div className="text-6xl font-bold text-gold-500 mb-2">{content.methodology.statCount}</div>
+                   <div className="text-xl text-white font-medium">{content.methodology.statLabel}</div>
                    <div className="mt-8 flex justify-center gap-2">
                      {[1,2,3,4,5].map(n => (
                        <div key={n} className="w-2 h-2 rounded-full bg-white/20" />
