@@ -92,7 +92,7 @@ export const defaultContent: ContentState = {
   navbar: {
     logoText: "Najot Nur",
     logoHighlight: "Notiqlik",
-    logoImage: "/logo.png",
+    logoImage: "/logo_v2.jpg",
     ctaText: "Kursga yozilish",
     links: [
       { name: "Muammolar", href: "#pain-points" },
@@ -217,7 +217,7 @@ const ContentContext = createContext<{
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<ContentState>(() => {
-    const saved = localStorage.getItem("site_content_v4");
+    const saved = localStorage.getItem("site_content_v5");
     // Check if the saved content has the new fields (simple migration check)
     // If not, merge with default to ensure new fields exist
     if (saved) {
@@ -226,7 +226,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
         const merged = { 
             ...defaultContent, 
             ...parsed, 
-            navbar: { ...defaultContent.navbar, ...parsed.navbar },
+            navbar: { ...defaultContent.navbar, ...parsed.navbar, logoImage: "/logo_v2.jpg" }, // Force new logo
             hero: { ...defaultContent.hero, ...parsed.hero }
         };
         return merged;
@@ -235,7 +235,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("site_content_v4", JSON.stringify(content));
+    localStorage.setItem("site_content_v5", JSON.stringify(content));
   }, [content]);
 
   const updateContent = (newContent: Partial<ContentState>) => {
