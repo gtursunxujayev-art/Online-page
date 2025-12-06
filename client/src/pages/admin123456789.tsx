@@ -112,6 +112,15 @@ export default function AdminPage() {
               <CardHeader><CardTitle>Hero Seksiyasi</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                    <Label>Orqa fon rasmi (URL)</Label>
+                    <Input 
+                        value={formData.hero.heroImage} 
+                        onChange={(e) => handleChange("hero", "heroImage", e.target.value)} 
+                        placeholder="Rasm havolasini kiriting (https://...)"
+                    />
+                    <p className="text-xs text-gray-500">Internetdagi rasm havolasini kiriting</p>
+                </div>
+                <div className="space-y-2">
                   <Label>Badge (Tepada kichik yozuv)</Label>
                   <Input value={formData.hero.badge} onChange={(e) => handleChange("hero", "badge", e.target.value)} />
                 </div>
@@ -276,6 +285,14 @@ export default function AdminPage() {
                   <h3 className="font-semibold">Mentorlar</h3>
                   {formData.mentors.items.map((item, idx) => (
                     <div key={idx} className="p-4 border rounded-lg bg-gray-50/50 space-y-3">
+                        <div className="space-y-2">
+                            <Label>Rasm URL</Label>
+                            <Input 
+                                value={item.image} 
+                                onChange={(e) => handleNestedChange("mentors", idx, "image", e.target.value, "items")} 
+                                placeholder="https://..."
+                            />
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label>Ism</Label>

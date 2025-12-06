@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Play } from "lucide-react";
-import heroImage from "@assets/generated_images/a_confident_speaker_on_a_modern_stage_with_warm_lighting..png";
 import { useContent } from "@/lib/contentContext";
 
 export default function Hero() {
@@ -12,7 +11,7 @@ export default function Hero() {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src={heroImage}
+          src={content.hero.heroImage}
           alt="Confident Speaker"
           className="w-full h-full object-cover"
         />

@@ -17,6 +17,7 @@ export interface ContentState {
     ctaPrimary: string;
     ctaSecondary: string;
     promises: string[];
+    heroImage: string;
   };
   painPoints: {
     titlePart1: string;
@@ -84,6 +85,7 @@ export interface ContentState {
 // Initial Default State
 import mentor1 from "@assets/generated_images/portrait_of_a_senior_male_public_speaker_mentor..png";
 import mentor2 from "@assets/generated_images/portrait_of_a_female_business_communication_coach..png";
+import heroImage from "@assets/generated_images/a_confident_speaker_on_a_modern_stage_with_warm_lighting..png";
 
 export const defaultContent: ContentState = {
   navbar: {
@@ -110,7 +112,8 @@ export const defaultContent: ContentState = {
       "His hayajon va qo‘rquvni yo‘qotish",
       "Fikrlarimni tizimli yetkazish",
       "Ishonchli, ravon va ta’sirchan nutq"
-    ]
+    ],
+    heroImage: heroImage
   },
   painPoints: {
     titlePart1: "Sizga tanish",
@@ -214,7 +217,16 @@ const ContentContext = createContext<{
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<ContentState>(() => {
     const saved = localStorage.getItem("site_content");
-    return saved ? JSON.parse(saved) : defaultContent;
+    // Check if the saved content has the new fields (simple migration check)
+    // If not, merge with default to ensure new fields exist
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!parsed.hero.heroImage) {
+            return { ...defaultContent, ...parsed, hero: { ...defaultContent.hero, ...parsed.hero } };
+        }
+        return parsed;
+    }
+    return defaultContent;
   });
 
   useEffect(() => {
