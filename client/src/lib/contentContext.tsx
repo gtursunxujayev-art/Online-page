@@ -83,9 +83,8 @@ export interface ContentState {
 }
 
 // Initial Default State
-import mentor1 from "@assets/generated_images/portrait_of_a_senior_male_public_speaker_mentor..png";
-import mentor2 from "@assets/generated_images/portrait_of_a_female_business_communication_coach..png";
-import heroImage from "@assets/generated_images/a_confident_speaker_on_a_modern_stage_with_warm_lighting..png";
+// Note: User provided specific URLs. If these are viewer links (ibb.co/...), they might not display correctly in img tags without direct linking (i.ibb.co/...).
+// Using provided URLs as requested.
 
 export const defaultContent: ContentState = {
   navbar: {
@@ -113,7 +112,7 @@ export const defaultContent: ContentState = {
       "Fikrlarimni tizimli yetkazish",
       "Ishonchli, ravon va ta’sirchan nutq"
     ],
-    heroImage: heroImage
+    heroImage: "https://ibb.co/tMYzKFby"
   },
   painPoints: {
     titlePart1: "Sizga tanish",
@@ -160,8 +159,8 @@ export const defaultContent: ContentState = {
     titleHighlight: "Mentorlar",
     description: "Sizga o‘z sohasining eng kuchli mutaxassislari ustozlik qiladi.",
     items: [
-      { name: "Aziz Rahimov", role: "Bosh Mentor", bio: "20+ yil tajribaga ega notiq. Xalqaro konferensiyalar spikeri. 5000+ o‘quvchilarni o‘qitgan.", image: mentor1 },
-      { name: "Malika Karimova", role: "Biznes Trener", bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.", image: mentor2 }
+      { name: "Aziz Rahimov", role: "Bosh Mentor", bio: "20+ yil tajribaga ega notiq. Xalqaro konferensiyalar spikeri. 5000+ o‘quvchilarni o‘qitgan.", image: "https://ibb.co/JW3hXms6" },
+      { name: "Malika Karimova", role: "Biznes Trener", bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.", image: "https://ibb.co/JYG60P5" }
     ]
   },
   testimonials: {
