@@ -1,24 +1,45 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { useContent } from "@/lib/contentContext";
+
+const plans = [
+  {
+    name: "Online",
+    price: "1,500,000 so‘m",
+    desc: "Masofadan turib o‘qish uchun",
+    features: ["6 hafta online darslar", "Uyga vazifalar", "Telegram yopiq guruh", "Sertifikat"],
+    popular: false
+  },
+  {
+    name: "Offline",
+    price: "2,500,000 so‘m",
+    desc: "Jonli muloqot va amaliyot",
+    features: ["6 hafta offline darslar", "Kamera qarshisida ishlash", "Individual feedback", "Networking", "Sertifikat"],
+    popular: true
+  },
+  {
+    name: "VIP",
+    price: "5,000,000 so‘m",
+    desc: "Shaxsiy mentorlik",
+    features: ["Offline darslar", "Shaxsiy mentor biriktiriladi", "Biznesga moslashtirilgan dastur", "Tushlik mentor bilan", "VIP Sertifikat"],
+    popular: false
+  }
+];
 
 export default function Pricing() {
-  const { content } = useContent();
-
   return (
     <section id="pricing" className="py-24 bg-white dark:bg-navy-950">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-navy-900 dark:text-white mb-4">
-            {content.pricing.titlePart1} <span className="text-gold-600">{content.pricing.titleHighlight}</span>
+            Kurs <span className="text-gold-600">Narxlari</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            {content.pricing.description}
+            O‘zingizga mos ta’lim formatini tanlang
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
-          {content.pricing.plans.map((plan, i) => (
+          {plans.map((plan, i) => (
             <div 
               key={i} 
               className={`relative p-8 rounded-3xl transition-all duration-300 ${
@@ -61,7 +82,7 @@ export default function Pricing() {
                     : "bg-navy-900 hover:bg-navy-800 text-white dark:bg-white dark:text-navy-900 dark:hover:bg-gray-200"
                 }`}
               >
-                {plan.buttonText}
+                Tanlash
               </Button>
             </div>
           ))}

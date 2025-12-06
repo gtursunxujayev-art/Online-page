@@ -2,11 +2,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Play } from "lucide-react";
 import heroImage from "@assets/generated_images/a_confident_speaker_on_a_modern_stage_with_warm_lighting..png";
-import { useContent } from "@/lib/contentContext";
 
 export default function Hero() {
-  const { content } = useContent();
-  
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Background Image with Overlay */}
@@ -28,29 +25,34 @@ export default function Hero() {
           className="text-white space-y-8"
         >
           <div className="inline-block px-4 py-1 rounded-full bg-gold-500/20 border border-gold-500/30 text-gold-500 text-sm font-semibold tracking-wider uppercase">
-            {content.hero.badge}
+            Professional Notiqlik Kursi
           </div>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold leading-tight">
-            {content.hero.titlePart1} <span className="text-gold-500 italic">{content.hero.titleHighlight}</span> {content.hero.titlePart2}
+            So‘z qudrati bilan <span className="text-gold-500 italic">dunyoni</span> zabt eting
           </h1>
           
           <p className="text-lg md:text-xl text-gray-200 max-w-lg leading-relaxed">
-            {content.hero.description}
+            Hayajonni yengib, fikrlaringizni tizimli va ta’sirchan yetkazishni o‘rganing. 
+            6 hafta ichida o‘zgarishni his qiling.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Button size="lg" className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold text-lg px-8 h-14 rounded-full shadow-[0_0_20px_rgba(234,179,8,0.3)] hover:shadow-[0_0_30px_rgba(234,179,8,0.5)] transition-all">
-              {content.hero.ctaPrimary}
+              Hoziroq ro‘yxatdan o‘ting
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 hover:text-white font-medium text-lg px-8 h-14 rounded-full backdrop-blur-sm">
-              <Play className="mr-2 h-5 w-5 fill-current" /> {content.hero.ctaSecondary}
+              <Play className="mr-2 h-5 w-5 fill-current" /> Dastur bilan tanishish
             </Button>
           </div>
 
           {/* Promises List */}
           <div className="pt-8 grid gap-3">
-            {content.hero.promises.map((item, i) => (
+            {[
+              "His hayajon va qo‘rquvni yo‘qotish",
+              "Fikrlarimni tizimli yetkazish",
+              "Ishonchli, ravon va ta’sirchan nutq"
+            ].map((item, i) => (
               <motion.div 
                 key={i}
                 initial={{ opacity: 0, x: -20 }}

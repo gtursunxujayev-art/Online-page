@@ -1,10 +1,25 @@
 import { motion } from "framer-motion";
 import { Quote } from "lucide-react";
-import { useContent } from "@/lib/contentContext";
+
+const reviews = [
+  {
+    name: "Jasur Abdullayev",
+    role: "Tadbirkor",
+    text: "Kursdan oldin mijozlar bilan gaplashishga qiynalar edim. Hozir har qanday uchrashuvda o‘zimni ishonchli his qilaman. Savdom 2 barobar oshdi."
+  },
+  {
+    name: "Nargiza Usmonova",
+    role: "Marketing Menejeri",
+    text: "Ishdagi prezentatsiyalar men uchun qo‘rqinchli tush edi. Najot Nur kursi menga nafaqat texnikalarni, balki ichki xotirjamlikni berdi."
+  },
+  {
+    name: "Sardor Tursunov",
+    role: "Student",
+    text: "Diplom himoyasida a’lo baho oldim! Oldinlari auditoriya oldida tili aylanmay qoladigan bola edim. Rahmat ustozlar!"
+  }
+];
 
 export default function Testimonials() {
-  const { content } = useContent();
-
   return (
     <section id="results" className="py-24 bg-navy-900 text-white overflow-hidden relative">
       {/* Background decorations */}
@@ -14,12 +29,12 @@ export default function Testimonials() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-            {content.testimonials.titlePart1} <span className="text-gold-500">{content.testimonials.titleHighlight}</span>
+            O‘quvchilarimiz <span className="text-gold-500">Natijalari</span>
           </h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {content.testimonials.items.map((review, i) => (
+          {reviews.map((review, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 30 }}
