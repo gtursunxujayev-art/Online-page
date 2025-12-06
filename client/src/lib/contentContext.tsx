@@ -104,7 +104,7 @@ export const defaultContent: ContentState = {
     titlePart1: "So‘z qudrati bilan",
     titleHighlight: "dunyoni",
     titlePart2: "zabt eting",
-    description: "Hayajonni yengib, fikrlaringizni tizimli va ta’sirchan yetkazishni o‘rganing. 6 hafta ichida o‘zgarishni his qiling.",
+    description: "Hayajonni yengib, fikrlaringizni tizimli va ta’sirchan yetkazishni o‘rganing. 4 hafta ichida o‘zgarishni his qiling.",
     ctaPrimary: "Hoziroq ro‘yxatdan o‘ting",
     ctaSecondary: "Dastur bilan tanishish",
     promises: [
@@ -142,16 +142,14 @@ export const defaultContent: ContentState = {
     statLabel: "Muvaffaqiyatli bitiruvchilar"
   },
   program: {
-    titlePart1: "6 Haftalik",
+    titlePart1: "4 Haftalik",
     titleHighlight: "Professional Dastur",
     description: "Nazariyadan amaliyotga bosqichma-bosqich o‘tish tizimi.",
     weeks: [
       { week: "1-hafta", title: "Poydevor va Psixologiya", topics: ["Sahna qo‘rquvi diagnostikasi", "O‘ziga ishonch psixologiyasi", "Notiqlikning oltin qoidalari"] },
       { week: "2-hafta", title: "Ovoz va Tana Tili", topics: ["Diafragma orqali nafas olish", "Diksiya va artikulyatsiya", "Jestlar va nigohlar bilan ishlash"] },
-      { week: "3-hafta", title: "Nutq Strukturasi", topics: ["Fikrni tizimlash (Skelet metodi)", "Kirish, Asosiy qism, Xulosa", "Argumentlash san'ati"] },
-      { week: "4-hafta", title: "Storytelling va Ta'sir", topics: ["Hikoya so‘zlash (Storytelling)", "Auditoriya bilan ishlash", "Qiyin savollarga javob berish"] },
-      { week: "5-hafta", title: "Maxsus Texnikalar", topics: ["SPIN va FAB metodlari", "Debatlar va muzokaralar", "Kamera oldida ishlash"] },
-      { week: "6-hafta", title: "Yakuniy Imtihon", topics: ["Katta sahnadagi chiqish", "Individual feedback", "Sertifikatlash"] }
+      { week: "3-hafta", title: "Nutq Strukturasi va Storytelling", topics: ["Fikrni tizimlash (Skelet metodi)", "Argumentlash san'ati", "Hikoya so‘zlash (Storytelling)"] },
+      { week: "4-hafta", title: "Amaliyot va Yakuniy Imtihon", topics: ["Kamera va Debatlar", "Katta sahnadagi chiqish", "Sertifikatlash"] }
     ]
   },
   mentors: {
@@ -177,8 +175,8 @@ export const defaultContent: ContentState = {
     titleHighlight: "Narxlari",
     description: "O‘zingizga mos ta’lim formatini tanlang",
     plans: [
-      { name: "Online", price: "1,500,000 so‘m", desc: "Masofadan turib o‘qish uchun", features: ["6 hafta online darslar", "Uyga vazifalar", "Telegram yopiq guruh", "Sertifikat"], popular: false, buttonText: "Tanlash" },
-      { name: "Offline", price: "2,500,000 so‘m", desc: "Jonli muloqot va amaliyot", features: ["6 hafta offline darslar", "Kamera qarshisida ishlash", "Individual feedback", "Networking", "Sertifikat"], popular: true, buttonText: "Tanlash" },
+      { name: "Online", price: "1,500,000 so‘m", desc: "Masofadan turib o‘qish uchun", features: ["4 hafta online darslar", "Uyga vazifalar", "Telegram yopiq guruh", "Sertifikat"], popular: false, buttonText: "Tanlash" },
+      { name: "Offline", price: "2,500,000 so‘m", desc: "Jonli muloqot va amaliyot", features: ["4 hafta offline darslar", "Kamera qarshisida ishlash", "Individual feedback", "Networking", "Sertifikat"], popular: true, buttonText: "Tanlash" },
       { name: "VIP", price: "5,000,000 so‘m", desc: "Shaxsiy mentorlik", features: ["Offline darslar", "Shaxsiy mentor biriktiriladi", "Biznesga moslashtirilgan dastur", "Tushlik mentor bilan", "VIP Sertifikat"], popular: false, buttonText: "Tanlash" }
     ]
   },
@@ -215,7 +213,7 @@ const ContentContext = createContext<{
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<ContentState>(() => {
-    const saved = localStorage.getItem("site_content_v2");
+    const saved = localStorage.getItem("site_content_v3");
     // Check if the saved content has the new fields (simple migration check)
     // If not, merge with default to ensure new fields exist
     if (saved) {
@@ -229,7 +227,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("site_content_v2", JSON.stringify(content));
+    localStorage.setItem("site_content_v3", JSON.stringify(content));
   }, [content]);
 
   const updateContent = (newContent: Partial<ContentState>) => {
