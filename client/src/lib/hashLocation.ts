@@ -18,5 +18,5 @@ export const useHashLocation = () => {
     return () => window.removeEventListener("hashchange", handler);
   }, []);
 
-  return [loc, navigate] as const;
+  return [loc, navigate];
 };
