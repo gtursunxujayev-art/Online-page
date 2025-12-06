@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useContent } from "@/lib/contentContext";
 
 export default function Navbar() {
+  const { content } = useContent();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -16,13 +18,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
-    { name: "Muammolar", href: "#pain-points" },
-    { name: "Metodika", href: "#methodology" },
-    { name: "Dastur", href: "#program" },
-    { name: "Mentorlar", href: "#mentors" },
-    { name: "Natijalar", href: "#results" },
-  ];
+  const navLinks = content.navbar.links;
 
   return (
     <nav
@@ -35,7 +31,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="text-2xl font-serif font-bold tracking-tight text-navy-900 dark:text-white">
-          Najot Nur <span className="text-gold-600">Notiqlik</span>
+          {content.navbar.logoText} <span className="text-gold-600">{content.navbar.logoHighlight}</span>
         </a>
 
         {/* Desktop Nav */}
@@ -52,7 +48,7 @@ export default function Navbar() {
             </a>
           ))}
           <Button className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold rounded-full px-6">
-            Kursga yozilish
+            {content.navbar.ctaText}
           </Button>
         </div>
 
@@ -86,7 +82,7 @@ export default function Navbar() {
                 </a>
               ))}
               <Button className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold">
-                Kursga yozilish
+                {content.navbar.ctaText}
               </Button>
             </div>
           </motion.div>
