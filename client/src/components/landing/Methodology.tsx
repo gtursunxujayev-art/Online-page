@@ -79,7 +79,7 @@ export default function Methodology() {
                    <div className="w-2 h-2 bg-green-500 rounded-full" />
                    <span className="text-xs font-bold text-navy-900">Natija</span>
                  </div>
-                 <p className="text-xs text-gray-600">"Endi sahnada o‘zimni erkin his qilaman!"</p>
+                 <p className="text-xs text-gray-600">"Endi sahnada o‘zimni erkin his qilayapman!"</p>
                </motion.div>
 
                <motion.div 
