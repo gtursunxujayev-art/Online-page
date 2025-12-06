@@ -88,6 +88,14 @@ export default function AdminPage() {
             <Card>
               <CardHeader><CardTitle>Navbar Sozlamalari</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label>Logo Rasmi (URL yoki fayl yo'li)</Label>
+                    <Input 
+                        value={formData.navbar.logoImage} 
+                        onChange={(e) => handleChange("navbar", "logoImage", e.target.value)} 
+                        placeholder="/logo.png"
+                    />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Logo Matni</Label>
@@ -119,6 +127,14 @@ export default function AdminPage() {
                         placeholder="Rasm havolasini kiriting (https://...)"
                     />
                     <p className="text-xs text-gray-500">Internetdagi rasm havolasini kiriting</p>
+                </div>
+                <div className="space-y-2">
+                    <Label>Video Havolasi (YouTube)</Label>
+                    <Input 
+                        value={formData.hero.heroVideoUrl} 
+                        onChange={(e) => handleChange("hero", "heroVideoUrl", e.target.value)} 
+                        placeholder="https://www.youtube.com/watch?v=..."
+                    />
                 </div>
                 <div className="space-y-2">
                   <Label>Badge (Tepada kichik yozuv)</Label>

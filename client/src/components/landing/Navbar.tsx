@@ -30,8 +30,17 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="text-2xl font-serif font-bold tracking-tight text-navy-900 dark:text-white">
-          {content.navbar.logoText} <span className="text-gold-600">{content.navbar.logoHighlight}</span>
+        <a href="#" className="flex items-center gap-3 text-2xl font-serif font-bold tracking-tight text-navy-900 dark:text-white group">
+          {content.navbar.logoImage && (
+            <img 
+              src={content.navbar.logoImage} 
+              alt="Logo" 
+              className="h-12 w-auto object-contain group-hover:scale-105 transition-transform" 
+            />
+          )}
+          <span>
+            {content.navbar.logoText} <span className="text-gold-600">{content.navbar.logoHighlight}</span>
+          </span>
         </a>
 
         {/* Desktop Nav */}

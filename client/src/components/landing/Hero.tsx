@@ -2,9 +2,14 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Play } from "lucide-react";
 import { useContent } from "@/lib/contentContext";
+import { useState } from "react";
+import RegistrationModal from "./RegistrationModal";
+import VideoModal from "./VideoModal";
 
 export default function Hero() {
   const { content } = useContent();
+  const [isRegOpen, setIsRegOpen] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
   
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
@@ -39,10 +44,19 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold text-lg px-8 h-14 rounded-full shadow-[0_0_20px_rgba(234,179,8,0.3)] hover:shadow-[0_0_30px_rgba(234,179,8,0.5)] transition-all">
+            <Button 
+              size="lg" 
+              className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold text-lg px-8 h-14 rounded-full shadow-[0_0_20px_rgba(234,179,8,0.3)] hover:shadow-[0_0_30px_rgba(234,179,8,0.5)] transition-all"
+              onClick={() => setIsRegOpen(true)}
+            >
               {content.hero.ctaPrimary}
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 hover:text-white font-medium text-lg px-8 h-14 rounded-full backdrop-blur-sm">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-white text-white hover:bg-white/10 hover:text-white font-medium text-lg px-8 h-14 rounded-full backdrop-blur-sm"
+              onClick={() => setIsVideoOpen(true)}
+            >
               <Play className="mr-2 h-5 w-5 fill-current" /> {content.hero.ctaSecondary}
             </Button>
           </div>
@@ -80,6 +94,9 @@ export default function Hero() {
           <div className="w-1 h-2 bg-white/50 rounded-full" />
         </div>
       </motion.div>
+
+      <RegistrationModal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} />
+      <VideoModal isOpen={isVideoOpen} onClose={() => setIsVideoOpen(false)} />
     </section>
   );
 }

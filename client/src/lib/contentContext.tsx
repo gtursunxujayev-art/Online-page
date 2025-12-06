@@ -5,6 +5,7 @@ export interface ContentState {
   navbar: {
     logoText: string;
     logoHighlight: string;
+    logoImage: string;
     ctaText: string;
     links: { name: string; href: string }[];
   };
@@ -18,6 +19,7 @@ export interface ContentState {
     ctaSecondary: string;
     promises: string[];
     heroImage: string;
+    heroVideoUrl: string;
   };
   painPoints: {
     titlePart1: string;
@@ -90,6 +92,7 @@ export const defaultContent: ContentState = {
   navbar: {
     logoText: "Najot Nur",
     logoHighlight: "Notiqlik",
+    logoImage: "/logo.png",
     ctaText: "Kursga yozilish",
     links: [
       { name: "Muammolar", href: "#pain-points" },
@@ -112,7 +115,8 @@ export const defaultContent: ContentState = {
       "Fikrlarimni tizimli yetkazish",
       "Ishonchli, ravon va ta’sirchan nutq"
     ],
-    heroImage: "https://i.ibb.co/3ySvdQ0t/photo-2025-12-06-18-38-33.jpg"
+    heroImage: "https://i.ibb.co/3ySvdQ0t/photo-2025-12-06-18-38-33.jpg",
+    heroVideoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   },
   painPoints: {
     titlePart1: "Sizga tanish",
@@ -213,21 +217,25 @@ const ContentContext = createContext<{
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<ContentState>(() => {
-    const saved = localStorage.getItem("site_content_v3");
+    const saved = localStorage.getItem("site_content_v4");
     // Check if the saved content has the new fields (simple migration check)
     // If not, merge with default to ensure new fields exist
     if (saved) {
         const parsed = JSON.parse(saved);
-        if (!parsed.hero.heroImage) {
-            return { ...defaultContent, ...parsed, hero: { ...defaultContent.hero, ...parsed.hero } };
-        }
-        return parsed;
+        // Ensure new fields exist by merging
+        const merged = { 
+            ...defaultContent, 
+            ...parsed, 
+            navbar: { ...defaultContent.navbar, ...parsed.navbar },
+            hero: { ...defaultContent.hero, ...parsed.hero }
+        };
+        return merged;
     }
     return defaultContent;
   });
 
   useEffect(() => {
-    localStorage.setItem("site_content_v3", JSON.stringify(content));
+    localStorage.setItem("site_content_v4", JSON.stringify(content));
   }, [content]);
 
   const updateContent = (newContent: Partial<ContentState>) => {
