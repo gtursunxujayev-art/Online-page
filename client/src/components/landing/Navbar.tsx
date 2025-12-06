@@ -30,7 +30,7 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="text-2xl font-serif font-bold tracking-tight text-navy-900 dark:text-white">
+        <a href="#" className="text-2xl font-serif font-bold tracking-tight dark:text-white text-[#8a1538]">
           {content.navbar.logoText} <span className="text-gold-600">{content.navbar.logoHighlight}</span>
         </a>
 
@@ -60,7 +60,6 @@ export default function Navbar() {
           {isOpen ? <X /> : <Menu />}
         </button>
       </div>
-
       {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
