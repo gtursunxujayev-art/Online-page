@@ -60,7 +60,7 @@ export default function AdminPage() {
   const { data: authData, isLoading: authLoading } = useQuery({
     queryKey: ["/api/auth/check"],
     queryFn: async () => {
-      const res = await fetch("/api/auth/check");
+      const res = await fetch("/api/auth/check", { credentials: "include" });
       return res.json();
     },
   });
@@ -73,7 +73,7 @@ export default function AdminPage() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
+      const res = await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
       if (!res.ok) throw new Error("Logout xatolik");
       return res.json();
     },
@@ -92,6 +92,7 @@ export default function AdminPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Xatolik");
@@ -132,7 +133,7 @@ export default function AdminPage() {
   const { data: leads = [], isLoading: leadsLoading, refetch: refetchLeads, error: leadsError } = useQuery<Lead[]>({
     queryKey: ["/api/leads"],
     queryFn: async () => {
-      const res = await fetch("/api/leads");
+      const res = await fetch("/api/leads", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch leads");
       return res.json();
     },
@@ -142,7 +143,7 @@ export default function AdminPage() {
   const { data: pipelines = [], isLoading: pipelinesLoading, error: pipelinesError } = useQuery<Pipeline[]>({
     queryKey: ["/api/kommo/pipelines"],
     queryFn: async () => {
-      const res = await fetch("/api/kommo/pipelines");
+      const res = await fetch("/api/kommo/pipelines", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch pipelines");
       const data: PipelinesResponse = await res.json();
       return data._embedded?.pipelines || [];
@@ -153,7 +154,7 @@ export default function AdminPage() {
   const { data: pipelineSettings } = useQuery({
     queryKey: ["/api/settings/pipeline-stage"],
     queryFn: async () => {
-      const res = await fetch("/api/settings/pipeline-stage");
+      const res = await fetch("/api/settings/pipeline-stage", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch settings");
       return res.json();
     },
@@ -176,7 +177,8 @@ export default function AdminPage() {
       const res = await fetch("/api/settings/pipeline-stage", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to save settings");
       return res.json();
