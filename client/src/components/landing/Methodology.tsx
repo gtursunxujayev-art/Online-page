@@ -91,7 +91,7 @@ export default function Methodology() {
                    <div className="w-2 h-2 bg-gold-500 rounded-full" />
                    <span className="text-xs font-bold text-navy-900">Texnika</span>
                  </div>
-                 <p className="text-xs text-gray-600">SPIN va FAB metodlari orqali sotuvlarim oshdi.</p>
+                 <p className="text-xs text-gray-600">ATIX texnikasi bilan fikrlarim chalkashmaydigan bo'ldi.</p>
                </motion.div>
             </div>
           </motion.div>
