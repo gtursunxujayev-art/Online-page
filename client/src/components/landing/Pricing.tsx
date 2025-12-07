@@ -25,26 +25,26 @@ export default function Pricing() {
                 plan.name.includes("VIP") 
                   ? "bg-gradient-to-br from-navy-900 to-black text-white shadow-2xl scale-105 z-10 border-2 border-gold-500" 
                   : plan.popular
-                    ? "bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-xl border-2 border-navy-100 dark:border-navy-700 transform md:-translate-y-4"
+                    ? "bg-navy-900 text-white shadow-2xl scale-105 z-10 border-2 border-gold-500/30 md:-translate-y-4"
                     : "bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-lg border border-gray-100 dark:border-navy-700"
               }`}
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-navy-900 text-white font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wide border border-navy-700">
+              {plan.popular && !plan.name.includes("VIP") && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold-500 text-navy-900 font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wide">
                   Eng ommabop
                 </div>
               )}
 
               {plan.name.includes("VIP") && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold-500 text-navy-900 font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wide shadow-[0_0_15px_rgba(202,138,4,0.5)]">
-                  Premium
+                  VIP
                 </div>
               )}
               
               <div className="text-center mb-8">
-                <h3 className={`text-xl font-bold mb-2 ${plan.name.includes("VIP") ? "text-gold-400" : ""}`}>{plan.name}</h3>
-                <div className={`text-3xl font-serif font-bold mb-2 ${plan.name.includes("VIP") ? "text-white" : "text-navy-900 dark:text-white"}`}>{plan.price}</div>
-                <p className={`text-sm ${plan.name.includes("VIP") ? "text-gray-300" : "text-gray-500 dark:text-gray-400"}`}>
+                <h3 className={`text-xl font-bold mb-2 ${plan.name.includes("VIP") ? "text-gold-400" : "text-inherit"}`}>{plan.name}</h3>
+                <div className={`text-3xl font-serif font-bold mb-2 ${plan.name.includes("VIP") ? "text-white" : "text-inherit"}`}>{plan.price}</div>
+                <p className={`text-sm ${plan.name.includes("VIP") ? "text-gray-300" : plan.popular ? "text-gray-300" : "text-gray-500 dark:text-gray-400"}`}>
                   {plan.desc}
                 </p>
               </div>
@@ -55,11 +55,13 @@ export default function Pricing() {
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                       plan.name.includes("VIP") 
                         ? "bg-gold-500 text-navy-900" 
-                        : "bg-navy-100 dark:bg-navy-700 text-navy-900 dark:text-white"
+                        : plan.popular 
+                          ? "bg-gold-500 text-navy-900"
+                          : "bg-navy-100 dark:bg-navy-700 text-navy-900 dark:text-white"
                     }`}>
                       <Check size={12} strokeWidth={3} />
                     </div>
-                    <span className={`text-sm ${plan.name.includes("VIP") ? "text-gray-200" : "text-gray-700 dark:text-gray-300"}`}>{feat}</span>
+                    <span className={`text-sm ${plan.name.includes("VIP") ? "text-gray-200" : plan.popular ? "text-gray-200" : "text-gray-700 dark:text-gray-300"}`}>{feat}</span>
                   </li>
                 ))}
               </ul>
@@ -69,7 +71,7 @@ export default function Pricing() {
                   plan.name.includes("VIP")
                     ? "bg-gradient-to-r from-gold-400 to-gold-600 hover:from-gold-500 hover:to-gold-700 text-navy-900 shadow-[0_0_20px_rgba(202,138,4,0.3)]" 
                     : plan.popular 
-                      ? "bg-navy-900 hover:bg-navy-800 text-white dark:bg-white dark:text-navy-900" 
+                      ? "bg-gold-500 hover:bg-gold-600 text-navy-900" 
                       : "bg-gray-100 hover:bg-gray-200 text-navy-900 dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white"
                 }`}
               >
