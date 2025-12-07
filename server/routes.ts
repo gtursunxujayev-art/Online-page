@@ -23,8 +23,35 @@ export async function registerRoutes(
       const leadData = leadSchema.parse(req.body);
       
       // Get Kommo credentials from environment variables
-      const kommoSubdomain = process.env.KOMMO_SUBDOMAIN;
-      const kommoAccessToken = process.env.KOMMO_ACCESS_TOKEN;
+      const rawSubdomain = process.env.KOMMO_SUBDOMAIN || "";
+      const kommoAccessToken = process.env.KOMMO_ACCESS_TOKEN || "";
+      
+      // Detect domain type and extract subdomain
+      let kommoSubdomain = rawSubdomain;
+      let kommoDomain = "kommo.com"; // Default to international domain
+      
+      // Check if using Russian AmoCRM domain
+      if (rawSubdomain.includes("amocrm.ru")) {
+        kommoDomain = "amocrm.ru";
+        kommoSubdomain = rawSubdomain
+          .replace(/^https?:\/\//, "")
+          .replace(/\.amocrm\.ru.*$/, "")
+          .trim();
+      } else if (rawSubdomain.includes("amocrm.com")) {
+        kommoDomain = "amocrm.com";
+        kommoSubdomain = rawSubdomain
+          .replace(/^https?:\/\//, "")
+          .replace(/\.amocrm\.com.*$/, "")
+          .trim();
+      } else if (rawSubdomain.includes("kommo.com")) {
+        kommoSubdomain = rawSubdomain
+          .replace(/^https?:\/\//, "")
+          .replace(/\.kommo\.com.*$/, "")
+          .trim();
+      } else {
+        // Just clean any protocol if present
+        kommoSubdomain = rawSubdomain.replace(/^https?:\/\//, "").trim();
+      }
       
       if (!kommoSubdomain || !kommoAccessToken) {
         console.error("Kommo credentials not configured");
@@ -36,28 +63,9 @@ export async function registerRoutes(
       }
 
       // Prepare lead data for Kommo CRM
+      // Include all info in lead name for simplicity (works with any account)
       const kommoLead = {
-        name: `${leadData.name} - ${leadData.job}`,
-        custom_fields_values: [
-          {
-            field_code: "PHONE",
-            values: [
-              {
-                value: leadData.phone,
-                enum_code: "WORK"
-              }
-            ]
-          },
-          {
-            field_code: "EMAIL", 
-            values: [
-              {
-                value: `${leadData.job}`,
-                enum_code: "WORK"
-              }
-            ]
-          }
-        ],
+        name: `${leadData.name} | ${leadData.phone} | ${leadData.job}`,
         _embedded: {
           tags: [
             {
@@ -68,8 +76,11 @@ export async function registerRoutes(
       };
 
       // Send to Kommo CRM API
+      const kommoUrl = `https://${kommoSubdomain}.${kommoDomain}/api/v4/leads`;
+      console.log("Sending lead to Kommo:", kommoUrl);
+      
       const kommoResponse = await fetch(
-        `https://${kommoSubdomain}.kommo.com/api/v4/leads`,
+        kommoUrl,
         {
           method: "POST",
           headers: {
