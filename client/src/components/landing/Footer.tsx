@@ -1,9 +1,71 @@
 import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Send, Phone } from "lucide-react";
 import { useContent } from "@/lib/contentContext";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Footer() {
   const { content } = useContent();
+  const [phone, setPhone] = useState("");
+  const { toast } = useToast();
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    if (value.length <= 9) {
+      setPhone(value);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (phone.length !== 9) {
+      toast({
+        title: "Xatolik",
+        description: "Telefon raqam 9 ta raqamdan iborat bo'lishi kerak",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/leads', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          name: "Sayt orqali murojaat",
+          phone: `+998${phone}`, 
+          job: "Footer kontakt forma",
+          source: 'footer'
+        }) 
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Muvaffaqiyatli yuborildi!",
+          description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",
+        });
+        setPhone("");
+      } else {
+        toast({
+          title: "Xatolik",
+          description: data.message || "Ma'lumot yuborishda xatolik yuz berdi",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting lead:", error);
+      toast({
+        title: "Xatolik",
+        description: "Ma'lumot yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <footer className="bg-navy-900 text-white pt-20 pb-8 border-t border-white/10">
@@ -60,16 +122,29 @@ export default function Footer() {
           <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
             <h4 className="font-bold text-lg mb-2">{content.footer.ctaTitle}</h4>
             <p className="text-gray-400 text-sm mb-4">{content.footer.ctaDesc}</p>
-            <div className="space-y-3">
-              <input 
-                type="text" 
-                placeholder="+998 90 123 45 67" 
-                className="w-full bg-navy-950 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-600 focus:border-gold-500 focus:outline-none"
-              />
-              <Button className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-navy-950 px-3 py-3 rounded-lg border border-white/20 text-sm text-gray-400">
+                  +998
+                </span>
+                <input 
+                  type="tel" 
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  placeholder="90 123 45 67" 
+                  className="flex-1 bg-navy-950 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-600 focus:border-gold-500 focus:outline-none"
+                  data-testid="input-footer-phone"
+                  required
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold"
+                data-testid="button-footer-submit"
+              >
                 {content.footer.ctaButton}
               </Button>
-            </div>
+            </form>
           </div>
 
         </div>

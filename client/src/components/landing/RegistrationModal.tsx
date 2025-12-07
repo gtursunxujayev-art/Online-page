@@ -25,7 +25,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (phone.length !== 9) {
@@ -37,35 +37,49 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       return;
     }
 
-    // Simulate sending to Kommo CRM
-    console.log("Sending lead to Kommo CRM...", {
-      name,
-      phone: `+998${phone}`,
-      job,
-      custom_fields: [
-        { id: "JOB_TITLE_ID", values: [{ value: job }] }
-      ]
-    });
-    
-    // In a real implementation with backend:
-    // await fetch('/api/leads', { 
-    //   method: 'POST', 
-    //   body: JSON.stringify({ name, phone: `+998${phone}`, job }) 
-    // });
-    
-    // For now, we simulate success
-    setTimeout(() => {
-      toast({
-        title: "Muvaffaqiyatli yuborildi!",
-        description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",
+    try {
+      // Send to backend API
+      const response = await fetch('/api/leads', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          name, 
+          phone: `+998${phone}`, 
+          job,
+          source: 'registration'
+        }) 
       });
-      
-      onClose();
-      // Reset form
-      setName("");
-      setPhone("");
-      setJob("");
-    }, 1000);
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Muvaffaqiyatli yuborildi!",
+          description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",
+        });
+        
+        onClose();
+        // Reset form
+        setName("");
+        setPhone("");
+        setJob("");
+      } else {
+        toast({
+          title: "Xatolik",
+          description: data.message || "Ma'lumot yuborishda xatolik yuz berdi",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting lead:", error);
+      toast({
+        title: "Xatolik",
+        description: "Ma'lumot yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
