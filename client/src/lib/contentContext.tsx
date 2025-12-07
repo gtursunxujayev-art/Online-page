@@ -276,7 +276,7 @@ const ContentContext = createContext<{
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<ContentState>(() => {
-    const saved = localStorage.getItem("site_content_v7");
+    const saved = localStorage.getItem("site_content_v8");
     // Check if the saved content has the new fields (simple migration check)
     // If not, merge with default to ensure new fields exist
     if (saved) {
@@ -285,9 +285,6 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
         const merged = { 
             ...defaultContent, 
             ...parsed, 
-            navbar: { ...defaultContent.navbar, ...parsed.navbar, logoHighlight: "Notiqlik markazi", logoImage: "/logo_v3.png" }, // Force new logo and text
-            footer: { ...defaultContent.footer, ...parsed.footer, brandHighlight: "Notiqlik markazi" }, // Force footer text
-            hero: { ...defaultContent.hero, ...parsed.hero }
         };
         return merged;
     }
@@ -295,7 +292,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("site_content_v7", JSON.stringify(content));
+    localStorage.setItem("site_content_v8", JSON.stringify(content));
   }, [content]);
 
   const updateContent = (newContent: Partial<ContentState>) => {
