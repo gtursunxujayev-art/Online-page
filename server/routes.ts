@@ -1,7 +1,9 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import session from "express-session";
+import MemoryStore from "memorystore";
 
 // Validation schema for lead submission
 const leadSchema = z.object({
@@ -11,13 +13,139 @@ const leadSchema = z.object({
   source: z.string().optional(), // "registration" or "footer"
 });
 
+// Extend session data
+declare module "express-session" {
+  interface SessionData {
+    userId?: string;
+    isAdmin?: boolean;
+  }
+}
+
+// Create default admin user if it doesn't exist
+async function ensureDefaultAdmin() {
+  const existingAdmin = await storage.getUserByUsername("admin");
+  if (!existingAdmin) {
+    await storage.createUser({ username: "admin", password: "admin" });
+    console.log("Default admin user created (admin/admin)");
+  }
+}
+
+// Auth middleware for protected routes
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (req.session?.userId) {
+    next();
+  } else {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
-  // GET /api/leads - list all leads
-  app.get("/api/leads", async (req, res) => {
+  // Create default admin user
+  await ensureDefaultAdmin();
+  
+  // Session middleware
+  const MemoryStoreSession = MemoryStore(session);
+  app.use(session({
+    secret: process.env.SESSION_SECRET || "najot-nur-secret-key-2024",
+    resave: false,
+    saveUninitialized: false,
+    store: new MemoryStoreSession({ checkPeriod: 86400000 }),
+    cookie: { 
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
+
+  // POST /api/auth/login - admin login
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username va parol kiritilishi shart" });
+      }
+      
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user || user.password !== password) {
+        return res.status(401).json({ error: "Noto'g'ri login yoki parol" });
+      }
+      
+      req.session.userId = user.id;
+      req.session.isAdmin = true;
+      
+      res.json({ success: true, message: "Muvaffaqiyatli kirildi" });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login xatolik" });
+    }
+  });
+
+  // POST /api/auth/logout - admin logout
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Logout xatolik" });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  // GET /api/auth/check - check if logged in
+  app.get("/api/auth/check", (req, res) => {
+    if (req.session?.userId) {
+      res.json({ authenticated: true });
+    } else {
+      res.json({ authenticated: false });
+    }
+  });
+
+  // PATCH /api/auth/credentials - change username/password
+  app.patch("/api/auth/credentials", requireAuth, async (req, res) => {
+    try {
+      const { newUsername, newPassword, currentPassword } = req.body;
+      
+      if (!currentPassword) {
+        return res.status(400).json({ error: "Joriy parol kiritilishi shart" });
+      }
+      
+      const user = await storage.getUser(req.session.userId!);
+      
+      if (!user || user.password !== currentPassword) {
+        return res.status(401).json({ error: "Joriy parol noto'g'ri" });
+      }
+      
+      const updates: { username?: string; password?: string } = {};
+      
+      if (newUsername && newUsername !== user.username) {
+        const existing = await storage.getUserByUsername(newUsername);
+        if (existing) {
+          return res.status(400).json({ error: "Bu username band" });
+        }
+        updates.username = newUsername;
+      }
+      
+      if (newPassword) {
+        updates.password = newPassword;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await storage.updateUser(user.id, updates);
+      }
+      
+      res.json({ success: true, message: "Ma'lumotlar yangilandi" });
+    } catch (error) {
+      console.error("Update credentials error:", error);
+      res.status(500).json({ error: "Yangilashda xatolik" });
+    }
+  });
+
+  // GET /api/leads - list all leads (protected)
+  app.get("/api/leads", requireAuth, async (req, res) => {
     try {
       const allLeads = await storage.getLeads();
       res.json(allLeads);

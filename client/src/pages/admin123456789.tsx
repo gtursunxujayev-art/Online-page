@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useContent, defaultContent } from "@/lib/contentContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Save, RefreshCw, Users } from "lucide-react";
+import { Trash2, Plus, Save, RefreshCw, Users, Settings, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -43,6 +44,7 @@ interface PipelinesResponse {
 }
 
 export default function AdminPage() {
+  const [, setLocation] = useLocation();
   const { content, updateContent } = useContent();
   const [formData, setFormData] = useState(content);
   const { toast } = useToast();
@@ -50,6 +52,83 @@ export default function AdminPage() {
   
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
   const [selectedStatusId, setSelectedStatusId] = useState<string>("");
+  
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const { data: authData, isLoading: authLoading } = useQuery({
+    queryKey: ["/api/auth/check"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/check");
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (!authLoading && authData && !authData.authenticated) {
+      setLocation("/login");
+    }
+  }, [authData, authLoading, setLocation]);
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (!res.ok) throw new Error("Logout xatolik");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      setLocation("/login");
+    },
+    onError: () => {
+      toast({ title: "Xatolik", description: "Chiqishda xatolik", variant: "destructive" });
+    },
+  });
+
+  const credentialsMutation = useMutation({
+    mutationFn: async (data: { currentPassword: string; newUsername?: string; newPassword?: string }) => {
+      const res = await fetch("/api/auth/credentials", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Xatolik");
+      return result;
+    },
+    onSuccess: (data) => {
+      toast({ title: "Muvaffaqiyat", description: data.message });
+      setCurrentPassword("");
+      setNewUsername("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error: Error) => {
+      toast({ title: "Xatolik", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleCredentialsUpdate = () => {
+    if (!currentPassword) {
+      toast({ title: "Xatolik", description: "Joriy parolni kiriting", variant: "destructive" });
+      return;
+    }
+    if (newPassword && newPassword !== confirmPassword) {
+      toast({ title: "Xatolik", description: "Yangi parollar mos kelmadi", variant: "destructive" });
+      return;
+    }
+    if (!newUsername && !newPassword) {
+      toast({ title: "Xatolik", description: "Yangi login yoki parol kiriting", variant: "destructive" });
+      return;
+    }
+    credentialsMutation.mutate({
+      currentPassword,
+      newUsername: newUsername || undefined,
+      newPassword: newPassword || undefined,
+    });
+  };
 
   const { data: leads = [], isLoading: leadsLoading, refetch: refetchLeads, error: leadsError } = useQuery<Lead[]>({
     queryKey: ["/api/leads"],
@@ -57,7 +136,8 @@ export default function AdminPage() {
       const res = await fetch("/api/leads");
       if (!res.ok) throw new Error("Failed to fetch leads");
       return res.json();
-    }
+    },
+    enabled: authData?.authenticated === true
   });
 
   const { data: pipelines = [], isLoading: pipelinesLoading, error: pipelinesError } = useQuery<Pipeline[]>({
@@ -67,7 +147,8 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to fetch pipelines");
       const data: PipelinesResponse = await res.json();
       return data._embedded?.pipelines || [];
-    }
+    },
+    enabled: authData?.authenticated === true
   });
 
   const { data: pipelineSettings } = useQuery({
@@ -76,7 +157,8 @@ export default function AdminPage() {
       const res = await fetch("/api/settings/pipeline-stage");
       if (!res.ok) throw new Error("Failed to fetch settings");
       return res.json();
-    }
+    },
+    enabled: authData?.authenticated === true
   });
 
   useEffect(() => {
@@ -108,6 +190,18 @@ export default function AdminPage() {
       toast({ title: "Xatolik", description: "Sozlamalarni saqlashda xatolik", variant: "destructive" });
     }
   });
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">Yuklanmoqda...</p>
+      </div>
+    );
+  }
+
+  if (!authData?.authenticated) {
+    return null;
+  }
 
   const handleSavePipelineSettings = () => {
     if (selectedPipelineId && selectedStatusId) {
@@ -169,6 +263,14 @@ export default function AdminPage() {
              <p className="text-gray-500">Sayt ma'lumotlarini tahrirlash</p>
           </div>
           <div className="flex gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+              data-testid="button-logout"
+            >
+              <LogOut className="w-4 h-4 mr-2"/> Chiqish
+            </Button>
             <Button variant="destructive" onClick={resetToDefault}>Reset to Default</Button>
             <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
                 <Save className="w-4 h-4 mr-2"/> Saqlash
@@ -189,6 +291,9 @@ export default function AdminPage() {
             <TabsTrigger value="mentors" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Mentorlar</TabsTrigger>
             <TabsTrigger value="pricing" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Narxlar</TabsTrigger>
             <TabsTrigger value="footer" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Footer</TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border bg-gray-100">
+              <Settings className="w-4 h-4 mr-1" /> Sozlamalar
+            </TabsTrigger>
           </TabsList>
 
           {/* LEADS */}
@@ -602,6 +707,71 @@ export default function AdminPage() {
                   </div>
               </CardContent>
              </Card>
+          </TabsContent>
+
+          {/* SETTINGS */}
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Login ma'lumotlarini o'zgartirish</CardTitle>
+                <CardDescription>Admin panel uchun login va parolni o'zgartiring</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Joriy parol *</Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    placeholder="Joriy parolni kiriting"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    data-testid="input-current-password"
+                  />
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label htmlFor="newUsername">Yangi login (ixtiyoriy)</Label>
+                  <Input
+                    id="newUsername"
+                    type="text"
+                    placeholder="Yangi login"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    data-testid="input-new-username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">Yangi parol (ixtiyoriy)</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    placeholder="Yangi parol"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    data-testid="input-new-password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Yangi parolni tasdiqlang</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Yangi parolni qayta kiriting"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    data-testid="input-confirm-password"
+                  />
+                </div>
+                <Button
+                  onClick={handleCredentialsUpdate}
+                  disabled={credentialsMutation.isPending}
+                  data-testid="button-update-credentials"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {credentialsMutation.isPending ? "Saqlanmoqda..." : "Saqlash"}
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
         </Tabs>
