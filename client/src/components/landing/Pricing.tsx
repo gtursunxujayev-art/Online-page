@@ -21,7 +21,7 @@ export default function Pricing() {
           {content.pricing.plans.map((plan, i) => (
             <div 
               key={i} 
-              className={`relative p-8 rounded-3xl transition-all duration-300 h-full flex flex-col ${
+              className={`relative p-8 rounded-3xl transition-all duration-300 flex flex-col ${
                 plan.name.includes("VIP") 
                   ? "bg-gradient-to-br from-navy-900 to-black text-white shadow-2xl scale-105 z-10 border-2 border-gold-500" 
                   : plan.popular
@@ -49,7 +49,7 @@ export default function Pricing() {
                 </p>
               </div>
 
-              <ul className="space-y-4 mb-8 flex-grow">
+              <ul className="space-y-4 mb-8">
                 {plan.features.map((feat, j) => (
                   <li key={j} className="flex items-start gap-3 text-left">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
@@ -67,7 +67,7 @@ export default function Pricing() {
               </ul>
 
               <Button 
-                className={`w-full py-6 rounded-xl font-bold text-lg mt-auto ${
+                className={`w-full py-6 rounded-xl font-bold text-lg ${
                   plan.name.includes("VIP")
                     ? "bg-gradient-to-r from-gold-400 to-gold-600 hover:from-gold-500 hover:to-gold-700 text-navy-900 shadow-[0_0_20px_rgba(202,138,4,0.3)]" 
                     : plan.popular 
