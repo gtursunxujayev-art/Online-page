@@ -13,7 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <a href="#" className="text-2xl font-serif font-bold tracking-tight text-white block mb-6">
-              {content.footer.brandText} <span className="text-gold-500">{content.footer.brandHighlight}</span>
+              {content.footer.brandText} <span className="text-gold-500 text-[22px]">{content.footer.brandHighlight}</span>
             </a>
             <p className="text-gray-400 leading-relaxed mb-6">
               {content.footer.description}
