@@ -137,12 +137,12 @@ export const defaultContent: ContentState = {
     titleHighlight: "o‘zgartiramiz?",
     description: "Nazariya va amaliyotning mukammal uyg‘unligi. Biz shunchaki leksiya o‘qimaymiz, biz sizni haqiqiy notiqqa aylantiramiz.",
     items: [
-      { title: "Psixologik tayyorgarlik", desc: "Sahna qo‘rquvini yo‘qotish bo‘yicha maxsus psixologik mashqlar va texnikalar." },
+      { title: "Psixologik tayyorgarlik", desc: "His hayajon va qo'rquvni yo'qotish bo'yicha maxsus psixologik mashqlar." },
       { title: "Ovoz va Diksiya", desc: "Notiq ovozini qurish, to‘g‘ri nafas olish, pauza va ritmni boshqarish." },
       { title: "30 Sekund Qoidasi", desc: "Fikrni 30 sekundda aniq, lo‘nda va ta’sirchan ifodalash metodlari." },
       { title: "Storytelling", desc: "Empatiya uyg‘otish, hikoya qilish va auditoriyani ishontirish san'ati." }
     ],
-    statCount: "1000+",
+    statCount: "4000+",
     statLabel: "Muvaffaqiyatli bitiruvchilar"
   },
   program: {

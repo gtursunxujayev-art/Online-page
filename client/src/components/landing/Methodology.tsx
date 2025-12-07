@@ -59,7 +59,7 @@ export default function Methodology() {
                <div className="absolute inset-0 bg-gradient-to-br from-navy-800 to-black opacity-80" />
                <div className="absolute inset-0 flex items-center justify-center">
                  <div className="text-center p-8">
-                   <div className="text-6xl font-bold text-gold-500 mb-2">4000+</div>
+                   <div className="text-6xl font-bold text-gold-500 mb-2">{content.methodology.statCount}</div>
                    <div className="text-xl text-white font-medium">{content.methodology.statLabel}</div>
                    <div className="mt-8 flex justify-center gap-2">
                      {[1,2,3,4,5].map(n => (
