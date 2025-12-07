@@ -30,7 +30,9 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-3 text-2xl font-serif font-bold tracking-tight text-navy-900 dark:text-white group">
+        <a href="#" className={`flex items-center gap-3 text-2xl font-serif font-bold tracking-tight group ${
+          scrolled ? "text-navy-900 dark:text-white" : "text-white"
+        }`}>
           {content.navbar.logoImage && (
             <img 
               src={content.navbar.logoImage} 
@@ -50,7 +52,7 @@ export default function Navbar() {
               key={link.name}
               href={link.href}
               className={`text-sm font-medium transition-colors hover:text-gold-600 ${
-                scrolled ? "text-navy-900 dark:text-white" : "text-navy-900 dark:text-white"
+                scrolled ? "text-navy-900 dark:text-white" : "text-white"
               }`}
             >
               {link.name}
@@ -63,7 +65,9 @@ export default function Navbar() {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-navy-900 dark:text-white"
+          className={`md:hidden ${
+            scrolled ? "text-navy-900 dark:text-white" : "text-white"
+          }`}
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X /> : <Menu />}
