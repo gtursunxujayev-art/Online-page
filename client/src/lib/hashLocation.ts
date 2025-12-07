@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 
 // returns the current hash location (excluding the '#' symbol)
 const currentLocation = () => {
-  return window.location.hash.replace(/^#/, "") || "/";
+  const hash = window.location.hash.replace(/^#/, "");
+  // Ensure it starts with a slash for wouter to match correctly
+  return hash.startsWith("/") ? hash : "/" + hash;
 };
 
 export const navigate = (to: string) => (window.location.hash = to);

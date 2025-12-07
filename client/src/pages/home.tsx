@@ -15,15 +15,16 @@ export default function Home({ params }: { params?: { section?: string } }) {
   const [location] = useLocation();
 
   useEffect(() => {
-    // Check either params or direct location hash/path logic if needed
-    // But since we use hash routing, params.section is populated by the Route path="/:section"
-    
     if (params?.section) {
       // Small timeout to ensure DOM is ready if it's a fresh mount
       setTimeout(() => {
-        const element = document.getElementById(params.section!);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
+        // Remove any leading slash if present (though params usually doesn't have it)
+        const id = params.section?.replace(/^\//, "");
+        if (id) {
+          const element = document.getElementById(id);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
         }
       }, 100);
     }

@@ -95,11 +95,11 @@ export const defaultContent: ContentState = {
     logoImage: "/logo_v3.png",
     ctaText: "Kursga yozilish",
     links: [
-      { name: "Muammolar", href: "#pain-points" },
-      { name: "Metodika", href: "#methodology" },
-      { name: "Dastur", href: "#program" },
-      { name: "Mentorlar", href: "#mentors" },
-      { name: "Natijalar", href: "#results" },
+      { name: "Muammolar", href: "#/pain-points" },
+      { name: "Metodika", href: "#/methodology" },
+      { name: "Dastur", href: "#/program" },
+      { name: "Mentorlar", href: "#/mentors" },
+      { name: "Natijalar", href: "#/testimonials" },
     ]
   },
   hero: {
