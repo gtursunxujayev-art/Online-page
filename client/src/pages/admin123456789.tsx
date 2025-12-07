@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useContent, defaultContent } from "@/lib/contentContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,118 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Save } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Plus, Save, RefreshCw, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface Lead {
+  id: string;
+  amoLeadId: number | null;
+  name: string;
+  phone: string;
+  job: string;
+  source: string;
+  pipelineId: number | null;
+  statusId: number | null;
+  syncStatus: string;
+  submittedAt: string;
+}
+
+interface Pipeline {
+  id: number;
+  name: string;
+  _embedded?: {
+    statuses?: Array<{ id: number; name: string }>;
+  };
+}
+
+interface PipelinesResponse {
+  _embedded?: {
+    pipelines?: Pipeline[];
+  };
+}
 
 export default function AdminPage() {
   const { content, updateContent } = useContent();
   const [formData, setFormData] = useState(content);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
+  const [selectedStatusId, setSelectedStatusId] = useState<string>("");
+
+  const { data: leads = [], isLoading: leadsLoading, refetch: refetchLeads, error: leadsError } = useQuery<Lead[]>({
+    queryKey: ["/api/leads"],
+    queryFn: async () => {
+      const res = await fetch("/api/leads");
+      if (!res.ok) throw new Error("Failed to fetch leads");
+      return res.json();
+    }
+  });
+
+  const { data: pipelines = [], isLoading: pipelinesLoading, error: pipelinesError } = useQuery<Pipeline[]>({
+    queryKey: ["/api/kommo/pipelines"],
+    queryFn: async () => {
+      const res = await fetch("/api/kommo/pipelines");
+      if (!res.ok) throw new Error("Failed to fetch pipelines");
+      const data: PipelinesResponse = await res.json();
+      return data._embedded?.pipelines || [];
+    }
+  });
+
+  const { data: pipelineSettings } = useQuery({
+    queryKey: ["/api/settings/pipeline-stage"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/pipeline-stage");
+      if (!res.ok) throw new Error("Failed to fetch settings");
+      return res.json();
+    }
+  });
+
+  useEffect(() => {
+    if (pipelineSettings) {
+      if (pipelineSettings.pipelineId) {
+        setSelectedPipelineId(String(pipelineSettings.pipelineId));
+      }
+      if (pipelineSettings.statusId) {
+        setSelectedStatusId(String(pipelineSettings.statusId));
+      }
+    }
+  }, [pipelineSettings]);
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (data: { pipelineId: number; statusId: number }) => {
+      const res = await fetch("/api/settings/pipeline-stage", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error("Failed to save settings");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Saqlandi", description: "Pipeline sozlamalari saqlandi" });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/pipeline-stage"] });
+    },
+    onError: () => {
+      toast({ title: "Xatolik", description: "Sozlamalarni saqlashda xatolik", variant: "destructive" });
+    }
+  });
+
+  const handleSavePipelineSettings = () => {
+    if (selectedPipelineId && selectedStatusId) {
+      saveSettingsMutation.mutate({
+        pipelineId: parseInt(selectedPipelineId),
+        statusId: parseInt(selectedStatusId)
+      });
+    }
+  };
+
+  const selectedPipeline = pipelines.find(p => String(p.id) === selectedPipelineId);
+  const statuses = selectedPipeline?._embedded?.statuses || [];
 
   const handleSave = () => {
     updateContent(formData);
@@ -73,6 +178,9 @@ export default function AdminPage() {
 
         <Tabs defaultValue="hero" className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent p-0 justify-start">
+            <TabsTrigger value="leads" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border bg-blue-50">
+              <Users className="w-4 h-4 mr-1" /> Lidlar
+            </TabsTrigger>
             <TabsTrigger value="navbar" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Navbar</TabsTrigger>
             <TabsTrigger value="hero" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Hero</TabsTrigger>
             <TabsTrigger value="painPoints" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Muammolar</TabsTrigger>
@@ -82,6 +190,125 @@ export default function AdminPage() {
             <TabsTrigger value="pricing" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Narxlar</TabsTrigger>
             <TabsTrigger value="footer" className="data-[state=active]:bg-white data-[state=active]:shadow-sm border">Footer</TabsTrigger>
           </TabsList>
+
+          {/* LEADS */}
+          <TabsContent value="leads">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>AmoCRM Pipeline Sozlamalari</CardTitle>
+                  <CardDescription>Yangi lidlar qaysi pipeline va bosqichga tushishini tanlang</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {pipelinesError && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700" data-testid="error-pipelines">
+                      Pipeline ma'lumotlarini olishda xatolik yuz berdi. AmoCRM sozlamalarini tekshiring.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Pipeline</Label>
+                      <Select value={selectedPipelineId} onValueChange={(val) => { setSelectedPipelineId(val); setSelectedStatusId(""); }}>
+                        <SelectTrigger data-testid="select-pipeline">
+                          <SelectValue placeholder={pipelinesLoading ? "Yuklanmoqda..." : pipelinesError ? "Xatolik" : "Pipeline tanlang"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pipelines.map((p) => (
+                            <SelectItem key={p.id} value={String(p.id)} data-testid={`pipeline-option-${p.id}`}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Bosqich (Status)</Label>
+                      <Select value={selectedStatusId} onValueChange={setSelectedStatusId} disabled={!selectedPipelineId}>
+                        <SelectTrigger data-testid="select-status">
+                          <SelectValue placeholder="Bosqich tanlang" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statuses.map((s) => (
+                            <SelectItem key={s.id} value={String(s.id)} data-testid={`status-option-${s.id}`}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleSavePipelineSettings} 
+                    disabled={!selectedPipelineId || !selectedStatusId || saveSettingsMutation.isPending}
+                    data-testid="button-save-pipeline-settings"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Sozlamalarni saqlash
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Lidlar ro'yxati</CardTitle>
+                    <CardDescription>Saytdan kelgan barcha arizalar</CardDescription>
+                  </div>
+                  <Button variant="outline" onClick={() => refetchLeads()} data-testid="button-refresh-leads">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Yangilash
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {leadsError ? (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700" data-testid="error-leads">
+                      Lidlar ro'yxatini olishda xatolik yuz berdi. Sahifani yangilang yoki keyinroq urinib ko'ring.
+                    </div>
+                  ) : leadsLoading ? (
+                    <p className="text-center py-8 text-gray-500">Yuklanmoqda...</p>
+                  ) : leads.length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">Hozircha lidlar yo'q</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Ism</TableHead>
+                          <TableHead>Telefon</TableHead>
+                          <TableHead>Kasb</TableHead>
+                          <TableHead>Manba</TableHead>
+                          <TableHead>Sana</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {leads.map((lead) => (
+                          <TableRow key={lead.id} data-testid={`row-lead-${lead.id}`}>
+                            <TableCell className="font-medium" data-testid={`text-name-${lead.id}`}>{lead.name}</TableCell>
+                            <TableCell data-testid={`text-phone-${lead.id}`}>{lead.phone}</TableCell>
+                            <TableCell data-testid={`text-job-${lead.id}`}>{lead.job}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" data-testid={`badge-source-${lead.id}`}>{lead.source}</Badge>
+                            </TableCell>
+                            <TableCell data-testid={`text-date-${lead.id}`}>
+                              {new Date(lead.submittedAt).toLocaleDateString("uz-UZ")}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={lead.syncStatus === "synced" ? "default" : lead.syncStatus === "failed" ? "destructive" : "secondary"}
+                                data-testid={`badge-sync-${lead.id}`}
+                              >
+                                {lead.syncStatus === "synced" ? "Yuborildi" : lead.syncStatus === "failed" ? "Xatolik" : "Kutilmoqda"}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           {/* NAVBAR */}
           <TabsContent value="navbar">

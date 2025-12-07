@@ -44,7 +44,7 @@ export default function Footer() {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success || data.savedLocally) {
         toast({
           title: "Muvaffaqiyatli yuborildi!",
           description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",

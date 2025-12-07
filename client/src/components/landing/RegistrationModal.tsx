@@ -38,7 +38,6 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     }
 
     try {
-      // Send to backend API
       const response = await fetch('/api/leads', { 
         method: 'POST',
         headers: {
@@ -54,14 +53,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success || data.savedLocally) {
         toast({
           title: "Muvaffaqiyatli yuborildi!",
           description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",
         });
         
         onClose();
-        // Reset form
         setName("");
         setPhone("");
         setJob("");
