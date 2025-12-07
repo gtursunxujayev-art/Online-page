@@ -179,12 +179,31 @@ export async function registerRoutes(
         });
       }
 
-      // Prepare lead data for Kommo CRM with pipeline/stage
+      // Prepare lead data for Kommo CRM with pipeline/stage and embedded contact
       const kommoLead: Record<string, unknown> = {
-        name: `${leadData.name} | ${leadData.phone} | ${leadData.job}`,
+        name: `Заявка с сайта: ${leadData.name}`,
         _embedded: {
-          tags: [{ name: leadData.source || "website" }]
-        }
+          tags: [{ name: leadData.source || "website" }],
+          contacts: [{
+            name: leadData.name,
+            custom_fields_values: [
+              {
+                field_code: "PHONE",
+                values: [{ value: leadData.phone }]
+              },
+              {
+                field_code: "POSITION",
+                values: [{ value: leadData.job }]
+              }
+            ]
+          }]
+        },
+        custom_fields_values: [
+          {
+            field_code: "UTM_SOURCE",
+            values: [{ value: "site : online.najotnur.uz" }]
+          }
+        ]
       };
       
       // Add pipeline and status if configured
@@ -195,8 +214,8 @@ export async function registerRoutes(
         kommoLead.status_id = parseInt(defaultStatusId);
       }
 
-      // Send to Kommo CRM API
-      const kommoUrl = `https://${kommoSubdomain}.${kommoDomain}/api/v4/leads`;
+      // Send to Kommo CRM API (complex leads endpoint for embedded contacts)
+      const kommoUrl = `https://${kommoSubdomain}.${kommoDomain}/api/v4/leads/complex`;
       console.log("Sending lead to Kommo:", kommoUrl);
       
       const kommoResponse = await fetch(kommoUrl, {
