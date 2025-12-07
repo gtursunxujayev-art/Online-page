@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 import { useContent, defaultContent } from "@/lib/contentContext";
+import { navigate } from "@/lib/hashLocation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,7 +44,6 @@ interface PipelinesResponse {
 }
 
 export default function AdminPage() {
-  const [, setLocation] = useLocation();
   const { content, updateContent } = useContent();
   const [formData, setFormData] = useState(content);
   const { toast } = useToast();
@@ -68,9 +67,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authLoading && authData && !authData.authenticated) {
-      setLocation("/login");
+      navigate("/login");
     }
-  }, [authData, authLoading, setLocation]);
+  }, [authData, authLoading]);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -80,7 +79,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.clear();
-      setLocation("/login");
+      navigate("/login");
     },
     onError: () => {
       toast({ title: "Xatolik", description: "Chiqishda xatolik", variant: "destructive" });

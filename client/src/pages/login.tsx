@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, User } from "lucide-react";
+import { navigate } from "@/lib/hashLocation";
 
 export default function LoginPage() {
-  const [, setLocation] = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +28,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         toast({ title: "Muvaffaqiyat", description: data.message });
-        setLocation("/admin123456789");
+        navigate("/admin123456789");
       } else {
         toast({ 
           title: "Xatolik", 
