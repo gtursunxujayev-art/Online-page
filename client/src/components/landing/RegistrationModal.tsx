@@ -37,19 +37,35 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       return;
     }
 
-    // In a real app, this would send data to backend
-    console.log("Form submitted:", { name, phone: `+998${phone}`, job });
-    
-    toast({
-      title: "Muvaffaqiyatli yuborildi!",
-      description: "Tez orada siz bilan bog'lanamiz.",
+    // Simulate sending to Kommo CRM
+    console.log("Sending lead to Kommo CRM...", {
+      name,
+      phone: `+998${phone}`,
+      job,
+      custom_fields: [
+        { id: "JOB_TITLE_ID", values: [{ value: job }] }
+      ]
     });
     
-    onClose();
-    // Reset form
-    setName("");
-    setPhone("");
-    setJob("");
+    // In a real implementation with backend:
+    // await fetch('/api/leads', { 
+    //   method: 'POST', 
+    //   body: JSON.stringify({ name, phone: `+998${phone}`, job }) 
+    // });
+    
+    // For now, we simulate success
+    setTimeout(() => {
+      toast({
+        title: "Muvaffaqiyatli yuborildi!",
+        description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",
+      });
+      
+      onClose();
+      // Reset form
+      setName("");
+      setPhone("");
+      setJob("");
+    }, 1000);
   };
 
   return (

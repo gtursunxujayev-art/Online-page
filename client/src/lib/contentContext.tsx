@@ -179,9 +179,68 @@ export const defaultContent: ContentState = {
     titleHighlight: "Narxlari",
     description: "O‘zingizga mos ta’lim formatini tanlang",
     plans: [
-      { name: "Online", price: "1,500,000 so‘m", desc: "Masofadan turib o‘qish uchun", features: ["4 hafta online darslar", "Uyga vazifalar", "Telegram yopiq guruh", "Sertifikat"], popular: false, buttonText: "Tanlash" },
-      { name: "Offline", price: "2,500,000 so‘m", desc: "Jonli muloqot va amaliyot", features: ["4 hafta offline darslar", "Kamera qarshisida ishlash", "Individual feedback", "Networking", "Sertifikat"], popular: true, buttonText: "Tanlash" },
-      { name: "VIP", price: "5,000,000 so‘m", desc: "Shaxsiy mentorlik", features: ["Offline darslar", "Shaxsiy mentor biriktiriladi", "Biznesga moslashtirilgan dastur", "Tushlik mentor bilan", "VIP Sertifikat"], popular: false, buttonText: "Tanlash" }
+      { 
+        name: "STANDART ONLAYN", 
+        price: "1,500,000 so‘m", 
+        desc: "Boshlang'ich bilimlar uchun", 
+        features: [
+          "Najot Nurdan notiqlikka oid 12 ta dars",
+          "4 oy darslarni ko‘rish imkoni",
+          "Ma’lumotlar uchun maxsus kanal",
+          "Qo‘shimcha tarqatma materiallar va chek listlar",
+          "Umumiy telegram guruh"
+        ], 
+        popular: false, 
+        buttonText: "Tanlash" 
+      },
+      { 
+        name: "PREMIUM ONLAYN", 
+        price: "2,500,000 so‘m", 
+        desc: "To'liq nazorat va amaliyot", 
+        features: [
+          "Najot Nurdan notiqlikka oid 12 ta dars",
+          "Asror Iskandarovdan “Shaxsiy brend qurish”",
+          "6 oy davomida darslarni ko‘rish imkoniyati",
+          "Ma’lumotlar uchun maxsus kanal",
+          "Qo‘shimcha tarqatma materiallar va chek-listlar",
+          "Umumiy telegram guruh",
+          "Kuratorlar bilan telegram guruh",
+          "Kurator nazorati",
+          "Islom Qoraboyev bilan 2 marotaba ovozli chat",
+          "Kurator bilan 2 marotaba zoom darsi",
+          "Kurs so‘ngida sertifikat berish",
+          "Kurator bilan shaxsiy suhbat imkoniyati",
+          "Bitiruv tadbiri"
+        ], 
+        popular: true, 
+        buttonText: "Tanlash" 
+      },
+      { 
+        name: "VIP ONLAYN", 
+        price: "5,000,000 so‘m", 
+        desc: "Maksimal natija va qo'shimcha bilimlar", 
+        features: [
+          "Najot Nurdan notiqlikka oid 12 ta dars",
+          "Asror Iskandarovdan “Shaxsiy brend qurish”",
+          "Kozimxon To‘rayevdan “Xodimlarni boshqarish”",
+          "Abdulaziz Muhammadan “Kitob psixologiyasi”",
+          "Davron Turdiyevdan “Xotirani kuchaytirish”",
+          "12 oy darslarni ko‘rish imkoniyati",
+          "Ma’lumotlar uchun maxsus kanal",
+          "Qo‘shimcha tarqatma materiallar va chek-listlar",
+          "Umumiy telegram guruh",
+          "Kuratorlar bilan telegram guruh",
+          "Kurator nazorati",
+          "Islom Qoraboyev bilan 4 marotaba zoom darsi",
+          "Kurator bilan 2 marotaba zoom darsi",
+          "Kurs so‘ngida sertifikat berish",
+          "Kurator bilan shaxsiy suhbat",
+          "1 marta couching darsda qatnashish imkoniyati",
+          "Bitiruv tadbiri"
+        ], 
+        popular: false, 
+        buttonText: "Tanlash" 
+      }
     ]
   },
   faq: {
