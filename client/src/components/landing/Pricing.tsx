@@ -26,7 +26,7 @@ export default function Pricing() {
               key={i} 
               className={`relative p-8 rounded-3xl transition-all duration-300 flex flex-col ${
                 plan.name.includes("VIP") 
-                  ? "bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 text-white shadow-2xl scale-105 z-10 border-2 border-gold-500 shadow-[0_0_50px_rgba(234,179,8,0.3)]" 
+                  ? "bg-navy-900 text-white shadow-2xl scale-105 z-10 border-2 border-gold-500 shadow-[0_0_50px_rgba(234,179,8,0.3)] md:-translate-y-4" 
                   : plan.popular
                     ? "bg-navy-900 text-white shadow-2xl scale-105 z-10 border-2 border-gold-500/30 md:-translate-y-4"
                     : "bg-navy-800 text-white shadow-lg border border-navy-700"
@@ -40,7 +40,7 @@ export default function Pricing() {
 
               {plan.name.includes("VIP") && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-gold-400 via-gold-500 to-gold-400 text-navy-900 font-bold px-6 py-1.5 rounded-full text-sm uppercase tracking-wider shadow-[0_0_20px_rgba(234,179,8,0.6)]">
-                  PREMIUM
+                  VIP
                 </div>
               )}
               
