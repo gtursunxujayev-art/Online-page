@@ -269,38 +269,66 @@ export const defaultContent: ContentState = {
 const ContentContext = createContext<{
   content: ContentState;
   updateContent: (newContent: Partial<ContentState>) => void;
+  saveContentToServer: (contentToSave: ContentState) => Promise<boolean>;
+  isLoading: boolean;
 }>({
   content: defaultContent,
   updateContent: () => {},
+  saveContentToServer: async () => false,
+  isLoading: true,
 });
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
-  const [content, setContent] = useState<ContentState>(() => {
-    const saved = localStorage.getItem("site_content_v12");
-    // Check if the saved content has the new fields (simple migration check)
-    // If not, merge with default to ensure new fields exist
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        // Ensure new fields exist by merging
-        const merged = { 
-            ...defaultContent, 
-            ...parsed, 
-        };
-        return merged;
-    }
-    return defaultContent;
-  });
+  const [content, setContent] = useState<ContentState>(defaultContent);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem("site_content_v12", JSON.stringify(content));
-  }, [content]);
+    const loadContent = async () => {
+      try {
+        const res = await fetch("/api/content");
+        if (res.ok) {
+          const text = await res.text();
+          if (text && text !== "null") {
+            const serverContent = JSON.parse(text);
+            if (serverContent && typeof serverContent === "object") {
+              setContent({ ...defaultContent, ...serverContent });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load content from server:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadContent();
+  }, []);
 
   const updateContent = (newContent: Partial<ContentState>) => {
     setContent((prev) => ({ ...prev, ...newContent }));
   };
 
+  const saveContentToServer = async (contentToSave: ContentState): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contentToSave),
+        credentials: "include",
+      });
+      if (res.ok) {
+        setContent(contentToSave);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Failed to save content:", error);
+      return false;
+    }
+  };
+
   return (
-    <ContentContext.Provider value={{ content, updateContent }}>
+    <ContentContext.Provider value={{ content, updateContent, saveContentToServer, isLoading }}>
       {children}
     </ContentContext.Provider>
   );

@@ -44,8 +44,15 @@ interface PipelinesResponse {
 }
 
 export default function AdminPage() {
-  const { content, updateContent } = useContent();
+  const { content, updateContent, saveContentToServer, isLoading: contentLoading } = useContent();
   const [formData, setFormData] = useState(content);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  useEffect(() => {
+    if (!contentLoading) {
+      setFormData(content);
+    }
+  }, [content, contentLoading]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -216,12 +223,23 @@ export default function AdminPage() {
   const selectedPipeline = pipelines.find(p => String(p.id) === selectedPipelineId);
   const statuses = selectedPipeline?._embedded?.statuses || [];
 
-  const handleSave = () => {
-    updateContent(formData);
-    toast({
-      title: "Saqlandi",
-      description: "O'zgarishlar muvaffaqiyatli saqlandi",
-    });
+  const handleSave = async () => {
+    setIsSaving(true);
+    const success = await saveContentToServer(formData);
+    setIsSaving(false);
+    
+    if (success) {
+      toast({
+        title: "Saqlandi",
+        description: "O'zgarishlar muvaffaqiyatli saqlandi va barchaga ko'rinadi",
+      });
+    } else {
+      toast({
+        title: "Xatolik",
+        description: "Saqlashda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleChange = (section: keyof typeof content, key: string, value: any) => {
@@ -273,8 +291,8 @@ export default function AdminPage() {
               <LogOut className="w-4 h-4 mr-2"/> Chiqish
             </Button>
             <Button variant="destructive" onClick={resetToDefault}>Reset to Default</Button>
-            <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
-                <Save className="w-4 h-4 mr-2"/> Saqlash
+            <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700" disabled={isSaving}>
+                <Save className="w-4 h-4 mr-2"/> {isSaving ? "Saqlanmoqda..." : "Saqlash"}
             </Button>
           </div>
         </div>

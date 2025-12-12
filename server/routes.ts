@@ -210,6 +210,33 @@ export async function registerRoutes(
     }
   });
 
+  // GET /api/content - get landing page content
+  app.get("/api/content", async (req, res) => {
+    try {
+      const content = await storage.getSetting("landing_content");
+      if (content) {
+        res.json(JSON.parse(content));
+      } else {
+        res.json(null);
+      }
+    } catch (error) {
+      console.error("Error fetching content:", error);
+      res.status(500).json({ error: "Failed to fetch content" });
+    }
+  });
+
+  // PUT /api/content - save landing page content (protected)
+  app.put("/api/content", requireAuth, async (req, res) => {
+    try {
+      const content = req.body;
+      await storage.setSetting("landing_content", JSON.stringify(content));
+      res.json({ success: true, message: "Kontent saqlandi" });
+    } catch (error) {
+      console.error("Error saving content:", error);
+      res.status(500).json({ error: "Failed to save content" });
+    }
+  });
+
   // GET /api/settings/pipeline-stage - get current pipeline/stage settings
   app.get("/api/settings/pipeline-stage", async (req, res) => {
     try {
