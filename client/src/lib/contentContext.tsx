@@ -161,8 +161,8 @@ export const defaultContent: ContentState = {
     titleHighlight: "Mentorlar",
     description: "Sizga o‘z sohasining eng kuchli mutaxassislari ustozlik qiladi.",
     items: [
-      { name: "Najot Nur", role: "Bosh Mentor", bio: "7+ yillik tajribaga ega O'zbekiston 24 telekanali boshlovchisi.", image: "https://i.ibb.co/rKdWnFw8/photo-2025-12-06-18-49-59.jpg" },
-      { name: "Islom Qoraboyev", role: "Biznes Trener - Qo'shimcha Mentor", bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.", image: "https://i.ibb.co/b4Cwqnz/photo-2025-12-06-18-51-08.jpg" }
+      { name: "Najot Nur", role: "Bosh Mentor", bio: "13+ yil tajribaga ega notiq. Nutq eksperti. Ko'plab konferensiyalar spikeri. 5000+ o'quvchilarni o'qitgan.", image: "https://i.ibb.co/rKdWnFw8/photo-2025-12-06-18-49-59.jpg" },
+      { name: "Islom Qoraboyev", role: "Biznes Trener - Qo'shimcha Mentor", bio: "7+ yillik tajribaga ega O'zbekiston 24 telekanali boshlovchisi.", image: "https://i.ibb.co/b4Cwqnz/photo-2025-12-06-18-51-08.jpg" }
     ]
   },
   testimonials: {
@@ -276,7 +276,7 @@ const ContentContext = createContext<{
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<ContentState>(() => {
-    const saved = localStorage.getItem("site_content_v9");
+    const saved = localStorage.getItem("site_content_v11");
     // Check if the saved content has the new fields (simple migration check)
     // If not, merge with default to ensure new fields exist
     if (saved) {
@@ -292,7 +292,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("site_content_v9", JSON.stringify(content));
+    localStorage.setItem("site_content_v11", JSON.stringify(content));
   }, [content]);
 
   const updateContent = (newContent: Partial<ContentState>) => {
