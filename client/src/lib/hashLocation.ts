@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 // returns the current hash location (excluding the '#' symbol)
 const currentLocation = () => {
@@ -7,9 +7,11 @@ const currentLocation = () => {
   return hash.startsWith("/") ? hash : "/" + hash;
 };
 
-export const navigate = (to: string) => (window.location.hash = to);
+export const navigate = (to: string) => {
+  window.location.hash = to;
+};
 
-export const useHashLocation = () => {
+export const useHashLocation = (): [string, (to: string) => void] => {
   const [loc, setLoc] = useState(currentLocation());
 
   useEffect(() => {
@@ -20,5 +22,9 @@ export const useHashLocation = () => {
     return () => window.removeEventListener("hashchange", handler);
   }, []);
 
-  return [loc, navigate];
+  const setLocation = useCallback((to: string) => {
+    window.location.hash = to;
+  }, []);
+
+  return [loc, setLocation];
 };

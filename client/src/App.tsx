@@ -16,13 +16,7 @@ function AppRouter() {
       <Route path="/" component={Home} />
       <Route path="/login" component={LoginPage} />
       <Route path="/admin123456789" component={AdminPage} />
-      {/* 
-         Handle anchor links (e.g. #pain-points) which are seen as routes in HashRouter.
-         We redirect/render Home for these so the page doesn't 404, 
-         and the browser's native behavior handles the scrolling to the ID.
-      */}
-      <Route path="/:section" component={Home} /> 
-      <Route component={NotFound} />
+      <Route component={Home} />
     </Switch>
   );
 }
