@@ -39,15 +39,15 @@ export default function Pricing() {
               )}
 
               {plan.name.includes("VIP") && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-gold-400 via-gold-500 to-gold-400 text-navy-900 font-bold px-6 py-1.5 rounded-full text-sm uppercase tracking-wider shadow-[0_0_20px_rgba(234,179,8,0.6)]">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold-500 text-navy-900 font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wide">
                   VIP
                 </div>
               )}
               
               <div className="text-center mb-8">
-                <h3 className={`text-xl font-bold mb-2 ${plan.name.includes("VIP") ? "text-gold-400" : "text-inherit"}`}>{plan.name.replace(/\s*ONLAYN\s*/i, " ").trim()}</h3>
-                <div className={`text-3xl font-serif font-bold mb-2 ${plan.name.includes("VIP") ? "text-gold-400" : "text-inherit"}`}>{plan.price}</div>
-                <p className={`text-sm ${plan.name.includes("VIP") ? "text-gray-300" : plan.popular ? "text-gray-300" : "text-gray-300"}`}>
+                <h3 className="text-xl font-bold mb-2 text-inherit">{plan.name.replace(/\s*ONLAYN\s*/i, " ").trim()}</h3>
+                <div className="text-3xl font-serif font-bold mb-2 text-inherit">{plan.price}</div>
+                <p className="text-sm text-gray-300">
                   {plan.desc}
                 </p>
               </div>
@@ -56,26 +56,22 @@ export default function Pricing() {
                 {plan.features.map((feat, j) => (
                   <li key={j} className="flex items-start gap-3 text-left">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      plan.name.includes("VIP") 
-                        ? "bg-gold-500 text-navy-900" 
-                        : plan.popular 
-                          ? "bg-gold-500 text-navy-900"
-                          : "bg-navy-700 text-white"
+                      plan.name.includes("VIP") || plan.popular 
+                        ? "bg-gold-500 text-navy-900"
+                        : "bg-navy-700 text-white"
                     }`}>
                       <Check size={12} strokeWidth={3} />
                     </div>
-                    <span className={`text-sm ${plan.name.includes("VIP") ? "text-gray-200" : plan.popular ? "text-gray-200" : "text-gray-300"}`}>{feat}</span>
+                    <span className={`text-sm ${plan.name.includes("VIP") || plan.popular ? "text-gray-200" : "text-gray-300"}`}>{feat}</span>
                   </li>
                 ))}
               </ul>
 
               <Button 
                 className={`w-full py-6 rounded-xl font-bold text-lg ${
-                  plan.name.includes("VIP")
-                    ? "bg-gradient-to-r from-gold-400 via-gold-500 to-gold-400 hover:from-gold-500 hover:via-gold-600 hover:to-gold-500 text-navy-900 shadow-[0_0_20px_rgba(234,179,8,0.4)]" 
-                    : plan.popular 
-                      ? "bg-gold-500 hover:bg-gold-600 text-navy-900" 
-                      : "bg-navy-700 hover:bg-navy-600 text-white"
+                  plan.name.includes("VIP") || plan.popular 
+                    ? "bg-gold-500 hover:bg-gold-600 text-navy-900" 
+                    : "bg-navy-700 hover:bg-navy-600 text-white"
                 }`}
                 onClick={() => setIsRegOpen(true)}
               >
