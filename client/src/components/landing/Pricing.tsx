@@ -26,7 +26,7 @@ export default function Pricing() {
               key={i} 
               className={`relative p-8 rounded-3xl transition-all duration-300 flex flex-col ${
                 plan.name.includes("VIP") 
-                  ? "bg-gradient-to-br from-amber-900 via-yellow-800 to-amber-700 text-white shadow-2xl scale-105 z-10 border-2 border-gold-400 shadow-[0_0_40px_rgba(234,179,8,0.5)]" 
+                  ? "bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 text-white shadow-2xl scale-105 z-10 border-2 border-gold-500 shadow-[0_0_50px_rgba(234,179,8,0.3)]" 
                   : plan.popular
                     ? "bg-navy-900 text-white shadow-2xl scale-105 z-10 border-2 border-gold-500/30 md:-translate-y-4"
                     : "bg-navy-800 text-white shadow-lg border border-navy-700"
@@ -39,15 +39,15 @@ export default function Pricing() {
               )}
 
               {plan.name.includes("VIP") && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold-500 text-navy-900 font-bold px-6 py-1.5 rounded-full text-sm uppercase tracking-wider shadow-[0_0_15px_rgba(234,179,8,0.6)]">
-                  VIP PRESTIGE
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-gold-400 via-gold-500 to-gold-400 text-navy-900 font-bold px-6 py-1.5 rounded-full text-sm uppercase tracking-wider shadow-[0_0_20px_rgba(234,179,8,0.6)]">
+                  PREMIUM
                 </div>
               )}
               
               <div className="text-center mb-8">
-                <h3 className={`text-xl font-bold mb-2 ${plan.name.includes("VIP") ? "text-gold-300" : "text-inherit"}`}>{plan.name.replace(/\s*ONLAYN\s*/i, " ").trim()}</h3>
-                <div className={`text-3xl font-serif font-bold mb-2 ${plan.name.includes("VIP") ? "text-white" : "text-inherit"}`}>{plan.price}</div>
-                <p className={`text-sm ${plan.name.includes("VIP") ? "text-gold-200" : plan.popular ? "text-gray-300" : "text-gray-300"}`}>
+                <h3 className={`text-xl font-bold mb-2 ${plan.name.includes("VIP") ? "text-gold-400" : "text-inherit"}`}>{plan.name.replace(/\s*ONLAYN\s*/i, " ").trim()}</h3>
+                <div className={`text-3xl font-serif font-bold mb-2 ${plan.name.includes("VIP") ? "text-gold-400" : "text-inherit"}`}>{plan.price}</div>
+                <p className={`text-sm ${plan.name.includes("VIP") ? "text-gray-300" : plan.popular ? "text-gray-300" : "text-gray-300"}`}>
                   {plan.desc}
                 </p>
               </div>
@@ -57,14 +57,14 @@ export default function Pricing() {
                   <li key={j} className="flex items-start gap-3 text-left">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                       plan.name.includes("VIP") 
-                        ? "bg-gold-400 text-amber-900" 
+                        ? "bg-gold-500 text-navy-900" 
                         : plan.popular 
                           ? "bg-gold-500 text-navy-900"
                           : "bg-navy-700 text-white"
                     }`}>
                       <Check size={12} strokeWidth={3} />
                     </div>
-                    <span className={`text-sm ${plan.name.includes("VIP") ? "text-white" : plan.popular ? "text-gray-200" : "text-gray-300"}`}>{feat}</span>
+                    <span className={`text-sm ${plan.name.includes("VIP") ? "text-gray-200" : plan.popular ? "text-gray-200" : "text-gray-300"}`}>{feat}</span>
                   </li>
                 ))}
               </ul>
@@ -72,7 +72,7 @@ export default function Pricing() {
               <Button 
                 className={`w-full py-6 rounded-xl font-bold text-lg ${
                   plan.name.includes("VIP")
-                    ? "bg-gold-400 hover:bg-gold-300 text-amber-900 shadow-lg" 
+                    ? "bg-gradient-to-r from-gold-400 via-gold-500 to-gold-400 hover:from-gold-500 hover:via-gold-600 hover:to-gold-500 text-navy-900 shadow-[0_0_20px_rgba(234,179,8,0.4)]" 
                     : plan.popular 
                       ? "bg-gold-500 hover:bg-gold-600 text-navy-900" 
                       : "bg-navy-700 hover:bg-navy-600 text-white"
