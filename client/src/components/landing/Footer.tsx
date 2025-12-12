@@ -119,12 +119,12 @@ export default function Footer() {
           </div>
 
           {/* CTA */}
-          <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-            <h4 className="font-bold text-lg mb-2">{content.footer.ctaTitle}</h4>
-            <p className="text-gray-400 text-sm mb-4">{content.footer.ctaDesc}</p>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="bg-navy-950 px-3 py-3 rounded-lg border border-white/20 text-sm text-gray-400">
+          <div className="bg-white/5 p-5 rounded-2xl border border-white/10 min-w-0">
+            <h4 className="font-bold text-base mb-2">{content.footer.ctaTitle}</h4>
+            <p className="text-gray-400 text-sm mb-3">{content.footer.ctaDesc}</p>
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="bg-navy-950 px-2 py-2 rounded-lg border border-white/20 text-xs text-gray-400 flex-shrink-0">
                   +998
                 </span>
                 <input 
@@ -132,14 +132,14 @@ export default function Footer() {
                   value={phone}
                   onChange={handlePhoneChange}
                   placeholder="90 123 45 67" 
-                  className="flex-1 bg-navy-950 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-600 focus:border-gold-500 focus:outline-none"
+                  className="flex-1 min-w-0 bg-navy-950 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:border-gold-500 focus:outline-none"
                   data-testid="input-footer-phone"
                   required
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold"
+                className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold text-sm py-2"
                 data-testid="button-footer-submit"
               >
                 {content.footer.ctaButton}
