@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useContent } from "@/lib/contentContext";
+import RegistrationModal from "./RegistrationModal";
 
 export default function Pricing() {
   const { content } = useContent();
+  const [isRegOpen, setIsRegOpen] = useState(false);
 
   return (
     <section id="pricing" className="py-24 bg-white dark:bg-navy-950">
@@ -74,6 +77,7 @@ export default function Pricing() {
                       ? "bg-gold-500 hover:bg-gold-600 text-navy-900" 
                       : "bg-gray-100 hover:bg-gray-200 text-navy-900 dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white"
                 }`}
+                onClick={() => setIsRegOpen(true)}
               >
                 {plan.buttonText}
               </Button>
@@ -81,6 +85,8 @@ export default function Pricing() {
           ))}
         </div>
       </div>
+      
+      <RegistrationModal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} />
     </section>
   );
 }

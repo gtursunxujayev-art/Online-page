@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useContent } from "@/lib/contentContext";
+import RegistrationModal from "./RegistrationModal";
 
 export default function Navbar() {
   const { content } = useContent();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isRegOpen, setIsRegOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,7 +60,10 @@ export default function Navbar() {
               {link.name}
             </a>
           ))}
-          <Button className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold rounded-full px-6">
+          <Button 
+            className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold rounded-full px-6"
+            onClick={() => setIsRegOpen(true)}
+          >
             {content.navbar.ctaText}
           </Button>
         </div>
@@ -94,13 +99,18 @@ export default function Navbar() {
                   {link.name}
                 </a>
               ))}
-              <Button className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold">
+              <Button 
+                className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold"
+                onClick={() => { setIsOpen(false); setIsRegOpen(true); }}
+              >
                 {content.navbar.ctaText}
               </Button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+      
+      <RegistrationModal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} />
     </nav>
   );
 }
