@@ -276,7 +276,7 @@ const ContentContext = createContext<{
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<ContentState>(() => {
-    const saved = localStorage.getItem("site_content_v8");
+    const saved = localStorage.getItem("site_content_v9");
     // Check if the saved content has the new fields (simple migration check)
     // If not, merge with default to ensure new fields exist
     if (saved) {
@@ -292,7 +292,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("site_content_v8", JSON.stringify(content));
+    localStorage.setItem("site_content_v9", JSON.stringify(content));
   }, [content]);
 
   const updateContent = (newContent: Partial<ContentState>) => {
