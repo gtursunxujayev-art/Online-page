@@ -39,9 +39,7 @@ export default function Pricing() {
               )}
 
               {plan.name.includes("VIP") && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-navy-900 text-gold-400 font-bold px-6 py-1.5 rounded-full text-sm uppercase tracking-wider shadow-lg border border-gold-400">
-                  VIP PRESTIGE
-                </div>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-navy-900 text-gold-400 font-bold px-6 py-1.5 rounded-full text-sm uppercase tracking-wider shadow-lg border border-gold-400">VIP</div>
               )}
               
               <div className="text-center mb-8">
@@ -85,7 +83,6 @@ export default function Pricing() {
           ))}
         </div>
       </div>
-      
       <RegistrationModal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} />
     </section>
   );
