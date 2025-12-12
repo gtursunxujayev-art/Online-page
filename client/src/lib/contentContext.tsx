@@ -161,8 +161,8 @@ export const defaultContent: ContentState = {
     titleHighlight: "Mentorlar",
     description: "Sizga o‘z sohasining eng kuchli mutaxassislari ustozlik qiladi.",
     items: [
-      { name: "Aziz Rahimov", role: "Bosh Mentor", bio: "20+ yil tajribaga ega notiq. Xalqaro konferensiyalar spikeri. 5000+ o‘quvchilarni o‘qitgan.", image: "https://i.ibb.co/rKdWnFw8/photo-2025-12-06-18-49-59.jpg" },
-      { name: "Malika Karimova", role: "Biznes Trener", bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.", image: "https://i.ibb.co/b4Cwqnz/photo-2025-12-06-18-51-08.jpg" }
+      { name: "Najot Nur", role: "Bosh Mentor", bio: "7+ yillik tajribaga ega O'zbekiston 24 telekanali boshlovchisi.", image: "https://i.ibb.co/rKdWnFw8/photo-2025-12-06-18-49-59.jpg" },
+      { name: "Islom Qoraboyev", role: "Biznes Trener - Qo'shimcha Mentor", bio: "Psixologiya fanlari nomzodi. Katta kompaniyalar rahbarlari uchun shaxsiy konsultant.", image: "https://i.ibb.co/b4Cwqnz/photo-2025-12-06-18-51-08.jpg" }
     ]
   },
   testimonials: {
