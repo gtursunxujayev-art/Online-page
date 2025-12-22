@@ -46,7 +46,6 @@ export default function Pricing() {
               
               <div className="text-center mb-8">
                 <h3 className="text-xl font-bold mb-2 text-inherit">{plan.name.replace(/\s*ONLAYN\s*/i, " ").trim()}</h3>
-                <div className="text-3xl font-serif font-bold mb-2 text-inherit">{plan.price}</div>
                 <p className="text-sm text-gray-300">
                   {plan.desc}
                 </p>
