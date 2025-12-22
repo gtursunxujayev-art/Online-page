@@ -188,7 +188,6 @@ export const defaultContent: ContentState = {
           "4 oy darslarni ko‘rish imkoni",
           "Ma’lumotlar uchun maxsus kanal",
           "Qo‘shimcha tarqatma materiallar va chek listlar",
-          "Umumiy telegram guruh"
         ], 
         popular: false, 
         buttonText: "Tanlash" 
