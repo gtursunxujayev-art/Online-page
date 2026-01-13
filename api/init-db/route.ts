@@ -1,12 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 import { sql } from '@vercel/postgres';
 
-export async function GET(request: NextRequest) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
+
+  // Handle OPTIONS request (CORS preflight)
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // Only GET method is allowed
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
     // Simple protection - check for a secret query parameter
-    const secret = request.nextUrl.searchParams.get('secret');
+    const secret = req.query.secret as string;
     if (secret !== process.env.ADMIN_TOKEN && process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     console.log('Initializing database tables...');
@@ -57,7 +77,7 @@ export async function GET(request: NextRequest) {
       console.log('Default admin user created');
     }
 
-    return NextResponse.json({
+    return res.status(200).json({
       success: true,
       message: 'Database tables created successfully',
       tables: ['users', 'leads', 'settings']
@@ -65,13 +85,12 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Database initialization failed:', error);
-    return NextResponse.json(
+    return res.status(500).json(
       { 
         success: false, 
         error: 'Database initialization failed',
         details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
+      }
     );
   }
 }
