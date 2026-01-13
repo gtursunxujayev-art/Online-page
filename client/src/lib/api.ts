@@ -1,13 +1,10 @@
 // API configuration for Vercel deployment
-// This allows API URLs to be configured via environment variables
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+// All API calls will be relative to the same domain
 
 export const api = {
   // Helper function to make API calls
   fetch: async (endpoint: string, options?: RequestInit) => {
-    const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
-    return fetch(url, options);
+    return fetch(endpoint, options);
   },
 
   // Specific API endpoints
@@ -18,25 +15,7 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       }),
-    getAll: () => api.fetch('/api/leads', { credentials: 'include' })
-  },
-
-  auth: {
-    login: (data: any) =>
-      api.fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      }),
-    logout: () => 
-      api.fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }),
-    check: () => api.fetch('/api/auth/check', { credentials: 'include' }),
-    updateCredentials: (data: any) =>
-      api.fetch('/api/auth/credentials', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
+    getAll: () => api.fetch('/api/leads')
   },
 
   content: {
@@ -45,23 +24,11 @@ export const api = {
       api.fetch('/api/content', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        credentials: 'include'
+        body: JSON.stringify(data)
       })
   },
 
-  kommo: {
-    getPipelines: () => api.fetch('/api/kommo/pipelines', { credentials: 'include' })
-  },
-
-  settings: {
-    getPipelineStage: () => api.fetch('/api/settings/pipeline-stage', { credentials: 'include' }),
-    updatePipelineStage: (data: any) =>
-      api.fetch('/api/settings/pipeline-stage', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        credentials: 'include'
-      })
+  amocrm: {
+    getPipelines: () => api.fetch('/api/amocrm/pipelines')
   }
 };
