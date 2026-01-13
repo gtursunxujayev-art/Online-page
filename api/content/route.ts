@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSetting, setSetting } from '@/lib/db';
 
 // Default content (same as in frontend)
@@ -35,36 +35,52 @@ const defaultContent = {
   // ... (other sections would be here)
 };
 
-// GET /api/content - Get content
-export async function GET() {
-  try {
-    // In a real implementation, you'd fetch content from database
-    // For now, return default content
-    return NextResponse.json(defaultContent);
-  } catch (error) {
-    console.error('Failed to fetch content:', error);
-    return NextResponse.json(defaultContent); // Fallback to default
-  }
-}
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
 
-// PUT /api/content - Update content (admin only)
-export async function PUT(request: NextRequest) {
+  // Handle OPTIONS request (CORS preflight)
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
-    // Check authentication
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // GET /api/content - Get content
+    if (req.method === 'GET') {
+      // In a real implementation, you'd fetch content from database
+      // For now, return default content
+      return res.status(200).json(defaultContent);
     }
 
-    const content = await request.json();
+    // PUT /api/content - Update content (admin only)
+    if (req.method === 'PUT') {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const content = req.body;
+      
+      // In a real implementation, you'd save content to database
+      // For now, we'll store it in settings
+      await setSetting('content', JSON.stringify(content));
+      
+      return res.status(200).json({ success: true });
+    }
+
+    // Method not allowed
+    return res.status(405).json({ error: 'Method not allowed' });
     
-    // In a real implementation, you'd save content to database
-    // For now, we'll store it in settings
-    await setSetting('content', JSON.stringify(content));
-    
-    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Failed to save content:', error);
-    return NextResponse.json({ error: 'Failed to save content' }, { status: 500 });
+    console.error('Content API error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
