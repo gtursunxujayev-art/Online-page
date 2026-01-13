@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { api } from "./api";
 
 // Define the shape of our content
 export interface ContentState {
@@ -150,10 +151,10 @@ export const defaultContent: ContentState = {
     titleHighlight: "Professional Dastur",
     description: "Nazariyadan amaliyotga bosqichma-bosqich o‘tish tizimi.",
     weeks: [
-      { week: "1-hafta", title: "Poydevor va Psixologiya", topics: ["Sahna qo‘rquvi diagnostikasi", "O‘ziga ishonch psixologiyasi", "Notiqlikning oltin qoidalari"] },
-      { week: "2-hafta", title: "Ovoz va Tana Tili", topics: ["Diafragma orqali nafas olish", "Diksiya va artikulyatsiya", "Jestlar va nigohlar bilan ishlash"] },
-      { week: "3-hafta", title: "Nutq Strukturasi va Storytelling", topics: ["Fikrni tizimlash (Skelet metodi)", "Argumentlash san'ati", "Hikoya so‘zlash (Storytelling)"] },
-      { week: "4-hafta", title: "Amaliyot va Yakuniy Imtihon", topics: ["Kamera va Debatlar", "Katta sahnadagi chiqish", "Sertifikatlash"] }
+      { week: "1-Modul", title: "Kirish - Tashxis", topics: ["Notiqlikka kirish", "Nutq apparati", "Nutqdagi 30 ta muammolarni aniqlash", "Nutqda sport va nafas olish", "Tez aytish mashqlari"] },
+      { week: "2-Modul", title: "Ovoz va Talaffuz", topics: ["Lab, til, jag' mashqlari", "Vokal darsi", "Tana tili", "Ovoz bilan ishlash", "Nafas mashqlari", "Yong'oq va qalam mashqlari", "Kitob o'qish mashqlari"] },
+      { week: "3-Modul", title: "Ishonch va Psixologiya", topics: ["His hayajon va qo'rqvni yengish", "Nutqda ruhiyatning o'rni", "Kitobning nutqdagi o'rni", "Kitob o'qish texnikalari", "Kamera bilan ishlash", "Parazit so'zlar va parazit pauzalardan qutilish", "Shaxsiy brend qurish", "Xarizmani shakllantirish"] },
+      { week: "4-Modul", title: "Texnikalar", topics: ["Nutqni tizimlashtirish (ATIX va TNYT)", "Notiq imidji", "Nutq texnikalar", "Notiqlarning sirlari", "Nutqdagi xatolar", "Nutq oldidan tayyorgarlik"] }
     ]
   },
   mentors: {
@@ -284,7 +285,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadContent = async () => {
       try {
-        const res = await fetch("/api/content");
+        const res = await api.content.get();
         if (res.ok) {
           const text = await res.text();
           if (text && text !== "null") {
@@ -309,12 +310,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
 
   const saveContentToServer = async (contentToSave: ContentState): Promise<boolean> => {
     try {
-      const res = await fetch("/api/content", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contentToSave),
-        credentials: "include",
-      });
+      const res = await api.content.update(contentToSave);
       if (res.ok) {
         setContent(contentToSave);
         return true;
