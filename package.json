@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:init": "tsx scripts/init-db.ts",
+    "db:push": "drizzle-kit push",
+    "build:api": "tsc --project tsconfig.api.json --outDir .vercel/output/functions/api",
+    "vercel-build": "npm run build && npm run build:api"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -48,6 +51,7 @@
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.0",
+    "@vercel/postgres": "^0.10.0",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
