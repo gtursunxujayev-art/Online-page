@@ -52,18 +52,68 @@ export default function Pricing() {
               </div>
 
               <ul className="space-y-4 mb-8">
-                {plan.features.map((feat, j) => (
-                  <li key={j} className="flex items-start gap-3 text-left">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      plan.name.includes("VIP") || plan.popular 
-                        ? "bg-gold-500 text-navy-900"
-                        : "bg-navy-700 text-white"
-                    }`}>
-                      <Check size={12} strokeWidth={3} />
-                    </div>
-                    <span className={`text-sm ${plan.name.includes("VIP") || plan.popular ? "text-gray-200" : "text-gray-300"}`}>{feat}</span>
-                  </li>
-                ))}
+                {(() => {
+                  const features = [];
+                  let inSpecialSection = false;
+                  let specialSectionItems = [];
+                  
+                  for (let j = 0; j < plan.features.length; j++) {
+                    const feat = plan.features[j];
+                    
+                    // Check for special section markers
+                    if (feat.startsWith("SPECIAL_SECTION_START:")) {
+                      inSpecialSection = true;
+                      const sectionTitle = feat.replace("SPECIAL_SECTION_START:", "");
+                      specialSectionItems = [sectionTitle];
+                      continue;
+                    }
+                    
+                    if (feat === "SPECIAL_SECTION_END") {
+                      inSpecialSection = false;
+                      // Render special section as a box
+                      features.push(
+                        <li key={`special-${j}`} className="mt-4">
+                          <div className="bg-navy-700/50 border border-gold-500/30 rounded-lg p-4">
+                            <div className="font-bold text-gold-400 mb-2 text-sm">
+                              {specialSectionItems[0]}
+                            </div>
+                            <ul className="space-y-2 pl-4">
+                              {specialSectionItems.slice(1).map((item, k) => (
+                                <li key={k} className="text-gray-300 text-sm flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </li>
+                      );
+                      specialSectionItems = [];
+                      continue;
+                    }
+                    
+                    if (inSpecialSection) {
+                      specialSectionItems.push(feat);
+                      continue;
+                    }
+                    
+                    // Regular feature with checkmark
+                    features.push(
+                      <li key={j} className="flex items-start gap-3 text-left">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          plan.name.includes("VIP") || plan.popular 
+                            ? "bg-gold-500 text-navy-900"
+                            : "bg-navy-700 text-white"
+                        }`}>
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                        <span className={`text-sm ${plan.name.includes("VIP") || plan.popular ? "text-gray-200" : "text-gray-300"}`}>{feat}</span>
+                      </li>
+                    );
+                  }
+                  
+                  return features;
+                })()}
               </ul>
 
               <Button 
