@@ -32,9 +32,16 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className={`flex items-center gap-3 text-2xl font-serif font-bold tracking-tight group ${
-          scrolled ? "text-navy-900 dark:text-white" : "text-white"
-        }`}>
+        <a 
+          href="#" 
+          className={`flex items-center gap-3 text-2xl font-serif font-bold tracking-tight group ${
+            scrolled ? "text-navy-900 dark:text-white" : "text-white"
+          }`}
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
           {content.navbar.logoImage && (
             <img 
               src={content.navbar.logoImage} 
@@ -49,17 +56,28 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className={`text-sm font-medium transition-colors hover:text-gold-600 ${
-                scrolled ? "text-navy-900 dark:text-white" : "text-white"
-              }`}
-            >
-              {link.name}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            // Extract the ID from href (remove #/)
+            const sectionId = link.href.replace(/^#\//, "");
+            return (
+              <a
+                key={link.name}
+                href={link.href}
+                className={`text-sm font-medium transition-colors hover:text-gold-600 ${
+                  scrolled ? "text-navy-900 dark:text-white" : "text-white"
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById(sectionId);
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+              >
+                {link.name}
+              </a>
+            );
+          })}
           <Button 
             className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold rounded-full px-6"
             onClick={() => setIsRegOpen(true)}
@@ -89,16 +107,27 @@ export default function Navbar() {
             className="md:hidden bg-white dark:bg-navy-900 border-t border-gray-100 dark:border-navy-800"
           >
             <div className="flex flex-col p-4 gap-4">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-navy-900 dark:text-white font-medium py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </a>
-              ))}
+              {navLinks.map((link) => {
+                // Extract the ID from href (remove #/)
+                const sectionId = link.href.replace(/^#\//, "");
+                return (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    className="text-navy-900 dark:text-white font-medium py-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsOpen(false);
+                      const element = document.getElementById(sectionId);
+                      if (element) {
+                        element.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                  >
+                    {link.name}
+                  </a>
+                );
+              })}
               <Button 
                 className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold"
                 onClick={() => { setIsOpen(false); setIsRegOpen(true); }}
