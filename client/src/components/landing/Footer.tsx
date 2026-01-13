@@ -3,6 +3,7 @@ import { Facebook, Instagram, Send, Phone } from "lucide-react";
 import { useContent } from "@/lib/contentContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 export default function Footer() {
   const { content } = useContent();
@@ -29,17 +30,11 @@ export default function Footer() {
     }
 
     try {
-      const response = await fetch('/api/leads', { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          name: "Sayt orqali murojaat",
-          phone: `+998${phone}`, 
-          job: "Footer kontakt forma",
-          source: 'footer'
-        }) 
+      const response = await api.leads.create({ 
+        name: "Sayt orqali murojaat",
+        phone: `+998${phone}`, 
+        job: "Footer kontakt forma",
+        source: 'footer'
       });
 
       const data = await response.json();
