@@ -100,7 +100,7 @@ export const defaultContent: ContentState = {
       { name: "Metodika", href: "#/methodology" },
       { name: "Dastur", href: "#/program" },
       { name: "Mentorlar", href: "#/mentors" },
-      { name: "Natijalar", href: "#/testimonials" },
+      { name: "Natijalar", href: "#/results" },
     ]
   },
   hero: {
