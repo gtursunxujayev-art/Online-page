@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -38,17 +39,11 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     }
 
     try {
-      const response = await fetch('/api/leads', { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          name, 
-          phone: `+998${phone}`, 
-          job,
-          source: 'registration'
-        }) 
+      const response = await api.leads.create({ 
+        name, 
+        phone: `+998${phone}`, 
+        job,
+        source: 'registration'
       });
 
       const data = await response.json();
