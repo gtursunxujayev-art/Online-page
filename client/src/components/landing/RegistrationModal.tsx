@@ -46,7 +46,15 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         source: 'registration'
       });
 
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      console.log('API Response:', data);
 
       if (data.success || data.savedLocally) {
         toast({
@@ -61,15 +69,18 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       } else {
         toast({
           title: "Xatolik",
-          description: data.message || "Ma'lumot yuborishda xatolik yuz berdi",
+          description: data.message || data.error || "Ma'lumot yuborishda xatolik yuz berdi",
           variant: "destructive"
         });
       }
     } catch (error) {
       console.error("Error submitting lead:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error("Full error details:", error);
+      
       toast({
         title: "Xatolik",
-        description: "Ma'lumot yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
+        description: `Ma'lumot yuborishda xatolik yuz berdi: ${errorMessage}. Iltimos qaytadan urinib ko'ring.`,
         variant: "destructive"
       });
     }
