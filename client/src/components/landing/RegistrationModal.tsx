@@ -40,6 +40,42 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     }
   };
 
+  // Function to get UTM parameters from URL
+  const getUTMParameters = () => {
+    const params = new URLSearchParams(window.location.search);
+    const utmParams: Record<string, string> = {};
+    
+    // Standard UTM parameters
+    const utmFields = [
+      'utm_source',
+      'utm_medium', 
+      'utm_campaign',
+      'utm_content',
+      'utm_term',
+      'utm_referrer',
+      'referrer',
+      'fbclid',
+      'gclid'
+    ];
+    
+    utmFields.forEach(field => {
+      const value = params.get(field);
+      if (value) {
+        utmParams[field] = value;
+      }
+    });
+    
+    // Also get current page URL and referrer
+    if (!utmParams.referrer && document.referrer) {
+      utmParams.referrer = document.referrer;
+    }
+    
+    // Add form identifier
+    utmParams.form = 'registration-modal';
+    
+    return utmParams;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -61,13 +97,23 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setIsSubmitting(true);
     
     try {
-      console.log('Submitting lead:', { name, phone: `+998${phone}`, job, source: 'registration' });
+      // Get UTM parameters
+      const utmParams = getUTMParameters();
+      
+      console.log('Submitting lead:', { 
+        name, 
+        phone: `+998${phone}`, 
+        job, 
+        source: 'registration',
+        ...utmParams
+      });
       
       const response = await api.leads.create({ 
         name, 
         phone: `+998${phone}`, 
         job,
-        source: 'registration'
+        source: 'registration',
+        ...utmParams
       });
 
       console.log('Response status:', response.status, response.statusText);
