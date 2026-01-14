@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 export default function Footer() {
   const { content } = useContent();
   const [phone, setPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,6 +21,12 @@ export default function Footer() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      console.log('Form is already submitting, ignoring duplicate click');
+      return;
+    }
+    
     if (phone.length !== 9) {
       toast({
         title: "Xatolik",
@@ -29,6 +36,8 @@ export default function Footer() {
       return;
     }
 
+    setIsSubmitting(true);
+    
     try {
       const response = await api.leads.create({ 
         name: "Sayt orqali murojaat",
@@ -37,20 +46,49 @@ export default function Footer() {
         source: 'footer'
       });
 
-      const data = await response.json();
+      // Clone the response to read it safely
+      const responseClone = response.clone();
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        // Try to read as text if JSON parsing fails
+        try {
+          const text = await responseClone.text();
+          console.error('Response text:', text);
+          throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
+        } catch (textError) {
+          throw new Error('Failed to read response from server');
+        }
+      }
+
+      // Check if response is ok
+      if (!response.ok) {
+        console.error('API Error Response:', data);
+        throw new Error(data?.error || data?.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
 
       if (data.success || data.savedLocally) {
         toast({
           title: "Muvaffaqiyatli yuborildi!",
-          description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",
+          description: "Ma'lumotlaringiz qabul qilindi. Telegram kanalimizga qo'shiling!",
         });
         setPhone("");
+        
+        // Redirect to Telegram after a short delay
+        setTimeout(() => {
+          window.open('https://t.me/najotnurnotiqlikmarkazi', '_blank');
+        }, 1500);
+        
       } else {
         toast({
           title: "Xatolik",
           description: data.message || "Ma'lumot yuborishda xatolik yuz berdi",
           variant: "destructive"
         });
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Error submitting lead:", error);
@@ -59,6 +97,7 @@ export default function Footer() {
         description: "Ma'lumot yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
         variant: "destructive"
       });
+      setIsSubmitting(false);
     }
   };
 
@@ -136,8 +175,9 @@ export default function Footer() {
                 type="submit" 
                 className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold text-sm py-2"
                 data-testid="button-footer-submit"
+                disabled={isSubmitting}
               >
-                {content.footer.ctaButton}
+                {isSubmitting ? "Yuborilmoqda..." : content.footer.ctaButton}
               </Button>
             </form>
           </div>
