@@ -73,228 +73,117 @@ export default async function handler(req, res) {
             }
           }
 
-          // First, try to find existing contact by phone
-          let contactId = null;
-          const searchResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts?query=${encodeURIComponent(body.phone)}`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (searchResponse.ok) {
-            const searchResult = await searchResponse.json();
-            if (searchResult._embedded?.contacts?.length > 0) {
-              contactId = searchResult._embedded.contacts[0].id;
-              console.log('Found existing contact:', contactId);
-              
-              // Update existing contact with new info
-              const updateContactData = {
-                name: body.name,
-                custom_fields_values: [
-                  {
-                    field_id: 142993, // Phone field ID
-                    values: [{ value: body.phone }]
-                  },
-                  {
-                    field_id: 142995, // Position/Job field ID
-                    values: [{ value: body.job }]
-                  }
-                ]
-              };
-
-              const updateResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts/${contactId}`, {
-                method: 'PATCH',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateContactData)
-              });
-
-              if (!updateResponse.ok) {
-                const errorText = await updateResponse.text();
-                console.error('Failed to update contact:', updateResponse.status, errorText);
-              }
-            }
-          }
-
-          // If no existing contact found, create new one
-          if (!contactId) {
-            const contactData = {
-              name: body.name,
-              custom_fields_values: [
-                {
-                  field_id: 142993, // Phone field ID (common in AmoCRM)
-                  values: [{ value: body.phone }]
-                },
-                {
-                  field_id: 142995, // Position/Job field ID
-                  values: [{ value: body.job }]
-                }
-              ]
-            };
-
-            console.log('Creating contact with data:', JSON.stringify(contactData, null, 2));
-            
-            // Create contact
-            const contactResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify([contactData])
-            });
-
-            const contactResponseText = await contactResponse.text();
-            console.log('Contact API Response Status:', contactResponse.status);
-            console.log('Contact API Response:', contactResponseText);
-            
-            if (contactResponse.ok) {
-              try {
-                const contactResult = JSON.parse(contactResponseText);
-                contactId = contactResult._embedded?.contacts?.[0]?.id;
-                console.log('✅ Contact created in AmoCRM:', contactId);
-              } catch (parseError) {
-                console.error('Failed to parse contact response:', parseError);
-              }
-            } else {
-              console.error('❌ Failed to create contact:', contactResponse.status, contactResponseText);
-            }
-          }
-
-          // Create lead in AmoCRM with all details
-          const leadName = `Заявка с сайта: ${body.name}`;
+          // PHASE 1: First test with minimal lead data (no custom fields)
+          console.log('=== PHASE 1: Testing with minimal lead data ===');
           
-          // Prepare custom fields for the lead
-          const customFields = [];
-          
-          // Add job/position field (from your existing field)
-          customFields.push({
-            field_id: 142273, // Job field ID - keep your existing one
-            values: [{ value: body.job }]
-          });
-          
-          // Add phone field to lead as well (in case contact creation failed)
-          customFields.push({
-            field_id: 142993, // Phone field ID - same as contact
-            values: [{ value: body.phone }]
-          });
-          
-          // Add UTM fields if provided
-          if (body.utm_source) {
-            customFields.push({
-              field_id: 1112343, // utm_source field ID from your AmoCRM
-              values: [{ value: body.utm_source }]
-            });
-          }
-          
-          if (body.utm_medium) {
-            customFields.push({
-              field_id: 1112339, // utm_medium field ID
-              values: [{ value: body.utm_medium }]
-            });
-          }
-          
-          if (body.utm_campaign) {
-            customFields.push({
-              field_id: 1112341, // utm_campaign field ID
-              values: [{ value: body.utm_campaign }]
-            });
-          }
-          
-          if (body.utm_content) {
-            customFields.push({
-              field_id: 1112337, // utm_content field ID
-              values: [{ value: body.utm_content }]
-            });
-          }
-          
-          if (body.utm_referrer) {
-            customFields.push({
-              field_id: 1112347, // utm_referrer field ID
-              values: [{ value: body.utm_referrer }]
-            });
-          }
-          
-          if (body.referrer) {
-            customFields.push({
-              field_id: 1112351, // referrer field ID
-              values: [{ value: body.referrer }]
-            });
-          }
-          
-          if (body.form) {
-            customFields.push({
-              field_id: 1112361, // form field ID
-              values: [{ value: body.form }]
-            });
-          }
-          
-          if (body.fbclid) {
-            customFields.push({
-              field_id: 1112373, // fbclid field ID
-              values: [{ value: body.fbclid }]
-            });
-          }
-          
-          // Add source (original source field)
-          if (body.source) {
-            customFields.push({
-              field_id: 142271, // Your existing source field ID
-              values: [{ value: body.source }]
-            });
-          }
-          
-          // Add timestamp/notes
-          customFields.push({
-            field_id: 142275, // Notes field ID
-            values: [{ value: `Submitted: ${new Date().toISOString()}\nName: ${body.name}\nPhone: ${body.phone}\nJob: ${body.job}` }]
-          });
-
-          const leadData = {
-            name: leadName,
+          const minimalLeadData = {
+            name: `Заявка с сайта: ${body.name}`,
             price: 0,
             pipeline_id: pipelineId ? parseInt(pipelineId) : undefined,
             status_id: statusId ? parseInt(statusId) : undefined,
-            custom_fields_values: customFields,
-            _embedded: contactId ? {
-              contacts: [{ id: contactId }]
-            } : undefined
           };
 
-          console.log('Creating lead with data:', JSON.stringify(leadData, null, 2));
+          console.log('Testing minimal lead data:', JSON.stringify([minimalLeadData], null, 2));
           
-          const leadResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads`, {
+          const testLeadResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify([leadData])
+            body: JSON.stringify([minimalLeadData])
           });
 
+          const testResponseText = await testLeadResponse.text();
+          console.log('Minimal lead test - Status:', testLeadResponse.status);
+          console.log('Minimal lead test - Response:', testResponseText);
+
           let leadId = null;
-          const responseText = await leadResponse.text();
-          console.log('Lead API Response Status:', leadResponse.status);
-          console.log('Lead API Response:', responseText);
           
-          if (leadResponse.ok) {
+          if (testLeadResponse.ok) {
             try {
-              const leadResult = JSON.parse(responseText);
-              leadId = leadResult._embedded?.leads?.[0]?.id;
-              console.log('✅ Lead created in AmoCRM:', leadId);
+              const testResult = JSON.parse(testResponseText);
+              leadId = testResult._embedded?.leads?.[0]?.id;
+              console.log('✅ Minimal lead created successfully:', leadId);
+              
+              // PHASE 2: Now try with custom fields
+              console.log('=== PHASE 2: Adding custom fields ===');
+              
+              // Prepare custom fields - start with just phone
+              const customFields = [];
+              
+              // Add phone field (most important)
+              customFields.push({
+                field_id: 142993, // Phone field ID
+                values: [{ value: body.phone }]
+              });
+              
+              // Update lead with custom fields
+              const updateData = {
+                custom_fields_values: customFields
+              };
+              
+              console.log('Updating lead with custom fields:', JSON.stringify(updateData, null, 2));
+              
+              const updateResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads/${leadId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+              });
+              
+              const updateResponseText = await updateResponse.text();
+              console.log('Update lead - Status:', updateResponse.status);
+              console.log('Update lead - Response:', updateResponseText);
+              
+              if (updateResponse.ok) {
+                console.log('✅ Lead updated with phone field');
+                
+                // PHASE 3: Try adding job field
+                console.log('=== PHASE 3: Adding job field ===');
+                
+                customFields.push({
+                  field_id: 142273, // Job field ID
+                  values: [{ value: body.job }]
+                });
+                
+                const updateJobData = {
+                  custom_fields_values: customFields
+                };
+                
+                const updateJobResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads/${leadId}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(updateJobData)
+                });
+                
+                const updateJobResponseText = await updateJobResponse.text();
+                console.log('Update job - Status:', updateJobResponse.status);
+                console.log('Update job - Response:', updateJobResponseText);
+                
+                if (updateJobResponse.ok) {
+                  console.log('✅ Lead updated with job field');
+                } else {
+                  console.error('❌ Failed to update lead with job field:', updateJobResponseText);
+                }
+              } else {
+                console.error('❌ Failed to update lead with phone field:', updateResponseText);
+              }
+              
               amoCRMResult = {
                 attempted: true,
                 success: true,
-                contactId: contactId,
                 leadId: leadId,
-                message: 'Successfully synced with AmoCRM'
+                message: 'Lead created and updated with custom fields'
               };
+              
             } catch (parseError) {
-              console.error('Failed to parse lead response:', parseError);
+              console.error('Failed to parse test response:', parseError);
               amoCRMResult = {
                 attempted: true,
                 success: false,
@@ -302,12 +191,65 @@ export default async function handler(req, res) {
               };
             }
           } else {
-            console.error('❌ Failed to create lead:', leadResponse.status, responseText);
-            amoCRMResult = {
-              attempted: true,
-              success: false,
-              error: `AmoCRM error: ${leadResponse.status} ${responseText.substring(0, 200)}`
+            console.error('❌ Minimal lead creation failed:', testResponseText);
+            
+            // Try alternative approach: create lead with basic custom fields only
+            console.log('=== Trying alternative approach ===');
+            
+            const alternativeLeadData = {
+              name: `Заявка с сайта: ${body.name}`,
+              price: 0,
+              pipeline_id: pipelineId ? parseInt(pipelineId) : undefined,
+              status_id: statusId ? parseInt(statusId) : undefined,
+              custom_fields_values: [
+                {
+                  field_id: 142993, // Phone field only
+                  values: [{ value: body.phone }]
+                }
+              ]
             };
+            
+            console.log('Alternative lead data:', JSON.stringify([alternativeLeadData], null, 2));
+            
+            const altResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify([alternativeLeadData])
+            });
+            
+            const altResponseText = await altResponse.text();
+            console.log('Alternative approach - Status:', altResponse.status);
+            console.log('Alternative approach - Response:', altResponseText);
+            
+            if (altResponse.ok) {
+              try {
+                const altResult = JSON.parse(altResponseText);
+                leadId = altResult._embedded?.leads?.[0]?.id;
+                console.log('✅ Alternative lead created successfully:', leadId);
+                amoCRMResult = {
+                  attempted: true,
+                  success: true,
+                  leadId: leadId,
+                  message: 'Lead created with phone field only'
+                };
+              } catch (parseError) {
+                console.error('Failed to parse alternative response:', parseError);
+                amoCRMResult = {
+                  attempted: true,
+                  success: false,
+                  error: `Failed to parse AmoCRM response: ${parseError.message}`
+                };
+              }
+            } else {
+              amoCRMResult = {
+                attempted: true,
+                success: false,
+                error: `AmoCRM error: ${testLeadResponse.status} ${testResponseText.substring(0, 200)}`
+              };
+            }
           }
 
         } catch (amoError) {
