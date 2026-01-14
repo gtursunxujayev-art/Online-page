@@ -1,49 +1,41 @@
 # amoCRM Integration Troubleshooting Guide
 
-## Problem: Leads not appearing in amoCRM when sending full lead info
+## Problem: Leads appear in amoCRM but only with title, no custom fields
 
 ### Symptoms
+- Leads appear in amoCRM with correct title
+- Custom fields (phone, job) are missing
 - Website says "successfully sent lead info"
-- amoCRM does not show new leads
-- Previously worked when only sending lead title (without custom fields)
 
 ### Root Cause Analysis
-The issue is likely with the custom fields structure in the amoCRM API request. Common problems include:
+The issue is with custom field creation/updates. The lead is created successfully (Phase 1 works), but custom fields are not being set. Possible reasons:
 
-1. **Invalid field IDs** - Using wrong custom field IDs for your specific amoCRM account
-2. **Malformed custom fields structure** - Incorrect JSON structure for custom_fields_values
-3. **Required fields missing** - Some fields might be required in your amoCRM pipeline setup
-4. **Field type mismatches** - Trying to set wrong data type for a field
+1. **Wrong field IDs** - Using incorrect custom field IDs for your amoCRM account
+2. **Incorrect field structure** - Wrong JSON format for custom_fields_values
+3. **Field type mismatches** - Phone fields might need `enum_code` property
+4. **Update API issues** - PATCH requests might not be working correctly
 
-## Solution Implemented
+## New Solution: Multiple Attempt Approach
 
-We've updated the code to use a **phased approach**:
+We've implemented a **4-option approach** that tries different field structures:
 
-### Phase 1: Minimal Lead Creation
-First, create a lead with only basic information (no custom fields):
+### **Option 1: Full fields with enum_code** (Most complete)
 ```javascript
 {
   name: "Заявка с сайта: John Doe",
   price: 0,
-  pipeline_id: 12345,
-  status_id: 67890
-}
-```
-
-### Phase 2: Add Phone Field
-If Phase 1 succeeds, update the lead with phone field:
-```javascript
-{
   custom_fields_values: [
-    { field_id: 142993, values: [{ value: "+998901234567" }] }
+    { field_id: 142993, values: [{ value: "+998901234567", enum_code: "WORK" }] },
+    { field_id: 142273, values: [{ value: "Manager" }] }
   ]
 }
 ```
 
-### Phase 3: Add Job Field
-If Phase 2 succeeds, update with job field:
+### **Option 2: Full fields without enum_code** (Simpler)
 ```javascript
 {
+  name: "Заявка с сайта: John Doe",
+  price: 0,
   custom_fields_values: [
     { field_id: 142993, values: [{ value: "+998901234567" }] },
     { field_id: 142273, values: [{ value: "Manager" }] }
@@ -51,116 +43,134 @@ If Phase 2 succeeds, update with job field:
 }
 ```
 
-### Alternative Approach
-If minimal lead creation fails, try creating lead with phone field only:
-```javascript
-{
-  name: "Заявка с сайта: John Doe",
-  price: 0,
-  pipeline_id: 12345,
-  status_id: 67890,
-  custom_fields_values: [
-    { field_id: 142993, values: [{ value: "+998901234567" }] }
-  ]
-}
-```
+### **Option 3: Phone field only, then update**
+1. Create lead with phone field only
+2. Update lead with job field using PATCH
+
+### **Option 4: Minimal lead (no custom fields)**
+Create lead with just name and price (fallback)
 
 ## Debugging Steps
 
 ### 1. Check Console Logs
-Look for these log messages in your server logs:
+Look for these log messages:
 
 ```
-=== PHASE 1: Testing with minimal lead data ===
-Minimal lead test - Status: 200
-Minimal lead test - Response: {...}
+=== OPTION 1: Creating lead with all fields ===
+Lead creation - Status: 200
+Lead creation - Response: {...}
 
-=== PHASE 2: Adding custom fields ===
-Update lead - Status: 200
-Update lead - Response: {...}
+=== OPTION 2: Trying without enum_code ===
+Simple lead - Status: 200
+Simple lead - Response: {...}
 
-=== PHASE 3: Adding job field ===
+=== OPTION 3: Trying with just phone field ===
+Phone-only lead - Status: 200
+Phone-only lead - Response: {...}
+
+=== Trying to update with job field ===
 Update job - Status: 200
 Update job - Response: {...}
 ```
 
-### 2. Verify Field IDs
-Check if your field IDs match your amoCRM setup:
+### 2. Identify Which Option Works
+- If **Option 1** logs show success → Fields with enum_code work
+- If **Option 2** logs show success → Simple field structure works  
+- If **Option 3** logs show success → Phone field works, job might need fixing
+- If **Option 4** logs show success → Custom fields are the problem
 
-| Field | Current ID | How to Find Correct ID |
-|-------|------------|------------------------|
-| Phone | 142993 | Go to amoCRM → Settings → Custom Fields → Contacts |
-| Job (Contact) | 142995 | Go to amoCRM → Settings → Custom Fields → Contacts |
-| Job (Lead) | 142273 | Go to amoCRM → Settings → Custom Fields → Leads |
-| Source | 142271 | Go to amoCRM → Settings → Custom Fields → Leads |
+### 3. Verify Field IDs in Your amoCRM
+**To find correct field IDs:**
 
-### 3. Test API Directly
-Use curl to test the amoCRM API:
+1. **For Phone Field (142993):**
+   ```bash
+   # API call to get contact custom fields
+   GET https://YOUR_SUBDOMAIN.amocrm.ru/api/v4/contacts/custom_fields
+   
+   # Look for phone field in response
+   ```
 
+2. **For Job Field (142273):**
+   ```bash
+   # API call to get lead custom fields  
+   GET https://YOUR_SUBDOMAIN.amocrm.ru/api/v4/leads/custom_fields
+   
+   # Look for job/position field
+   ```
+
+### 4. Test Field IDs Directly
 ```bash
-# Test minimal lead creation
+# Test with your actual field IDs
 curl -X POST "https://YOUR_SUBDOMAIN.amocrm.ru/api/v4/leads" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '[{"name": "Test Lead", "price": 0}]'
-
-# Test with custom fields
-curl -X POST "https://YOUR_SUBDOMAIN.amocrm.ru/api/v4/leads" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '[{"name": "Test Lead", "price": 0, "custom_fields_values": [{"field_id": 142993, "values": [{"value": "+998901234567"}]}]}]'
+  -d '[{
+    "name": "Test Lead",
+    "price": 0,
+    "custom_fields_values": [
+      {"field_id": YOUR_PHONE_FIELD_ID, "values": [{"value": "+998901234567"}]},
+      {"field_id": YOUR_JOB_FIELD_ID, "values": [{"value": "Manager"}]}
+    ]
+  }]'
 ```
 
-### 4. Check Environment Variables
-Ensure these are set correctly:
-```bash
-AMOCRM_SUBDOMAIN=yourcompany  # or full URL
-AMOCRM_ACCESS_TOKEN=your_token_here
-AMOCRM_PIPELINE_ID=12345      # optional
-AMOCRM_STATUS_ID=67890        # optional
-```
+## Common Issues & Solutions
 
-## Common Error Messages & Solutions
+### **Phone Field Not Showing**
+- **Problem**: Phone field exists but not populated
+- **Solution**: Try adding `enum_code: "WORK"` to phone field values
+- **Alternative**: Check if phone field is a "multitext" or "phone" type in amoCRM
 
-### "Validation Failed"
-- Check field IDs match your amoCRM account
-- Verify field types (text, phone, etc.)
-- Ensure required fields are provided
+### **Job Field Not Showing**
+- **Problem**: Job field not appearing in lead
+- **Solution**: Verify field ID matches your lead custom fields (not contact fields)
+- **Check**: Field might be disabled or have different type in amoCRM
 
-### "Invalid custom_fields_values"
-- Check JSON structure is correct
-- Ensure values array contains objects with "value" property
-- Verify field IDs exist in your amoCRM
+### **"Validation Failed" Errors**
+- **Check**: Field IDs exist in your amoCRM account
+- **Check**: Field types match (text field vs phone field)
+- **Check**: Required fields are provided
 
-### "Pipeline not found"
-- Check AMOCRM_PIPELINE_ID environment variable
-- Verify the pipeline exists in your amoCRM
-- User must have access to the pipeline
+### **PATCH Updates Not Working**
+- **Issue**: Lead created but updates fail
+- **Solution**: Ensure PATCH sends complete `custom_fields_values` array
+- **Format**: Must include ALL fields, not just new ones
 
-## Field Mapping Reference
+## Field ID Reference
 
-### Current Field Configuration
+### **Current Configuration**
 ```javascript
-// Contact Fields
-PHONE: field_id: 142993
-POSITION: field_id: 142995
-
-// Lead Fields  
-PHONE: field_id: 142993 (same as contact)
-POSITION: field_id: 142273 (different from contact)
-SOURCE: field_id: 142271
-NOTES: field_id: 142275
+// These IDs might not match your amoCRM!
+PHONE_FIELD_ID = 142993    // Contact/Lead phone field
+JOB_FIELD_ID = 142273      // Lead job/position field
 ```
 
-### To Update Field IDs
-Edit `api/leads.js` or `api/leads/route.ts` and change the `field_id` values to match your amoCRM setup.
+### **To Update Field IDs**
+Edit these files and change the `field_id` values:
 
-## Testing the Fix
+1. **`api/leads.js`** - Lines with `field_id: 142993` and `field_id: 142273`
+2. **`api/leads/route.ts`** - Same locations
 
-1. Submit a lead through your website form
-2. Check server logs for detailed amoCRM API responses
-3. Look in amoCRM for the new lead
-4. If it appears, check if custom fields are populated correctly
+## Quick Fix Checklist
 
-## Rollback Plan
-If the new approach doesn't work, you can revert to the previous version or contact amoCRM support with the API error messages.
+1. **Test a lead submission** - Check which option succeeds in logs
+2. **Note the successful option** - See which field structure works
+3. **Update field IDs if needed** - Use your actual amoCRM field IDs
+4. **Check field types** - Ensure phone/job fields exist in your amoCRM
+5. **Verify pipeline access** - User must have access to the pipeline
+
+## If Nothing Works
+
+1. **Contact amoCRM support** with API error messages
+2. **Check amoCRM webhooks/logs** for incoming API requests
+3. **Test with Postman/curl** to isolate the issue
+4. **Consider using amoCRM web forms** as alternative
+
+## Success Indicators
+
+- ✅ Lead appears in amoCRM with correct title
+- ✅ Phone number appears in lead custom fields
+- ✅ Job/position appears in lead custom fields
+- ✅ All data matches form submission
+
+The system will now try 4 different approaches and log which one works, making it easy to identify and fix the exact issue.
