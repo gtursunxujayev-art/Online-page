@@ -1,13 +1,34 @@
 // API configuration for Vercel deployment
-// All API calls will be relative to the same domain
+// Use environment variable for API URL in production
 
 const isDevelopment = import.meta.env.DEV;
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+// Helper function to build full API URL
+const buildApiUrl = (endpoint: string): string => {
+  // If we have a custom API URL, use it
+  if (API_BASE_URL) {
+    return `${API_BASE_URL}${endpoint}`;
+  }
+  // Otherwise use relative path (for same-domain deployment)
+  return endpoint;
+};
+
+// Utility function for direct fetch calls (used by components that don't use api.fetch)
+export const fetchWithBaseUrl = async (endpoint: string, options?: RequestInit): Promise<Response> => {
+  const url = buildApiUrl(endpoint);
+  console.log(`Direct fetch to: ${url}`, { isDevelopment, API_BASE_URL });
+  return fetch(url, options);
+};
 
 export const api = {
   // Helper function to make API calls
   fetch: async (endpoint: string, options?: RequestInit) => {
+    const url = buildApiUrl(endpoint);
+    console.log(`API call to: ${url}`, { isDevelopment, API_BASE_URL });
+    
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(url, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
@@ -16,7 +37,7 @@ export const api = {
       });
       return response;
     } catch (error) {
-      console.error(`API call failed for ${endpoint}:`, error);
+      console.error(`API call failed for ${url}:`, error);
       throw error;
     }
   },
@@ -24,7 +45,7 @@ export const api = {
   // Test API connection
   test: async () => {
     try {
-      const response = await fetch('/api/health');
+      const response = await fetchWithBaseUrl('/api/health');
       return response.ok;
     } catch {
       return false;
