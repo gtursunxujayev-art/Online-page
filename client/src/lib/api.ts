@@ -1,10 +1,34 @@
 // API configuration for Vercel deployment
 // All API calls will be relative to the same domain
 
+const isDevelopment = import.meta.env.DEV;
+
 export const api = {
   // Helper function to make API calls
   fetch: async (endpoint: string, options?: RequestInit) => {
-    return fetch(endpoint, options);
+    try {
+      const response = await fetch(endpoint, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error(`API call failed for ${endpoint}:`, error);
+      throw error;
+    }
+  },
+  
+  // Test API connection
+  test: async () => {
+    try {
+      const response = await fetch('/api/health');
+      return response.ok;
+    } catch {
+      return false;
+    }
   },
 
   // Specific API endpoints
