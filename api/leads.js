@@ -136,6 +136,8 @@ export default async function handler(req, res) {
               ]
             };
 
+            console.log('Creating contact with data:', JSON.stringify(contactData, null, 2));
+            
             // Create contact
             const contactResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`, {
               method: 'POST',
@@ -146,13 +148,20 @@ export default async function handler(req, res) {
               body: JSON.stringify([contactData])
             });
 
+            const contactResponseText = await contactResponse.text();
+            console.log('Contact API Response Status:', contactResponse.status);
+            console.log('Contact API Response:', contactResponseText);
+            
             if (contactResponse.ok) {
-              const contactResult = await contactResponse.json();
-              contactId = contactResult._embedded?.contacts?.[0]?.id;
-              console.log('Contact created in AmoCRM:', contactId);
+              try {
+                const contactResult = JSON.parse(contactResponseText);
+                contactId = contactResult._embedded?.contacts?.[0]?.id;
+                console.log('✅ Contact created in AmoCRM:', contactId);
+              } catch (parseError) {
+                console.error('Failed to parse contact response:', parseError);
+              }
             } else {
-              const errorText = await contactResponse.text();
-              console.error('Failed to create contact:', contactResponse.status, errorText);
+              console.error('❌ Failed to create contact:', contactResponse.status, contactResponseText);
             }
           }
 
@@ -256,6 +265,8 @@ export default async function handler(req, res) {
             } : undefined
           };
 
+          console.log('Creating lead with data:', JSON.stringify(leadData, null, 2));
+          
           const leadResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads`, {
             method: 'POST',
             headers: {
@@ -266,24 +277,36 @@ export default async function handler(req, res) {
           });
 
           let leadId = null;
+          const responseText = await leadResponse.text();
+          console.log('Lead API Response Status:', leadResponse.status);
+          console.log('Lead API Response:', responseText);
+          
           if (leadResponse.ok) {
-            const leadResult = await leadResponse.json();
-            leadId = leadResult._embedded?.leads?.[0]?.id;
-            console.log('Lead created in AmoCRM:', leadId);
-            amoCRMResult = {
-              attempted: true,
-              success: true,
-              contactId: contactId,
-              leadId: leadId,
-              message: 'Successfully synced with AmoCRM'
-            };
+            try {
+              const leadResult = JSON.parse(responseText);
+              leadId = leadResult._embedded?.leads?.[0]?.id;
+              console.log('✅ Lead created in AmoCRM:', leadId);
+              amoCRMResult = {
+                attempted: true,
+                success: true,
+                contactId: contactId,
+                leadId: leadId,
+                message: 'Successfully synced with AmoCRM'
+              };
+            } catch (parseError) {
+              console.error('Failed to parse lead response:', parseError);
+              amoCRMResult = {
+                attempted: true,
+                success: false,
+                error: `Failed to parse AmoCRM response: ${parseError.message}`
+              };
+            }
           } else {
-            const errorText = await leadResponse.text();
-            console.error('Failed to create lead:', leadResponse.status, errorText);
+            console.error('❌ Failed to create lead:', leadResponse.status, responseText);
             amoCRMResult = {
               attempted: true,
               success: false,
-              error: `AmoCRM error: ${leadResponse.status} ${errorText.substring(0, 100)}`
+              error: `AmoCRM error: ${leadResponse.status} ${responseText.substring(0, 200)}`
             };
           }
 
