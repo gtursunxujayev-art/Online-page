@@ -68,6 +68,19 @@ export default function AdminPage() {
     queryKey: ["/api/auth/check"],
     queryFn: async () => {
       const res = await fetch("/api/auth/check", { credentials: "include" });
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      if (!res.ok) {
+        let errorText = res.statusText;
+        try {
+          errorText = await responseClone.text();
+        } catch {
+          // If we can't read the text, use statusText
+        }
+        throw new Error(`Failed to check auth: ${res.status} ${errorText}`);
+      }
+      
       return res.json();
     },
   });
@@ -81,7 +94,19 @@ export default function AdminPage() {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-      if (!res.ok) throw new Error("Logout xatolik");
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      if (!res.ok) {
+        let errorText = res.statusText;
+        try {
+          errorText = await responseClone.text();
+        } catch {
+          // If we can't read the text, use statusText
+        }
+        throw new Error(`Logout xatolik: ${res.status} ${errorText}`);
+      }
+      
       return res.json();
     },
     onSuccess: () => {
@@ -101,7 +126,24 @@ export default function AdminPage() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      const result = await res.json();
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      let result;
+      try {
+        result = await res.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        // Try to read as text if JSON parsing fails
+        try {
+          const text = await responseClone.text();
+          console.error('Response text:', text);
+          throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
+        } catch (textError) {
+          throw new Error('Failed to read response from server');
+        }
+      }
+      
       if (!res.ok) throw new Error(result.error || "Xatolik");
       return result;
     },
@@ -141,7 +183,19 @@ export default function AdminPage() {
     queryKey: ["/api/leads"],
     queryFn: async () => {
       const res = await fetch("/api/leads", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch leads");
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      if (!res.ok) {
+        let errorText = res.statusText;
+        try {
+          errorText = await responseClone.text();
+        } catch {
+          // If we can't read the text, use statusText
+        }
+        throw new Error(`Failed to fetch leads: ${res.status} ${errorText}`);
+      }
+      
       return res.json();
     },
     enabled: authData?.authenticated === true
@@ -151,7 +205,19 @@ export default function AdminPage() {
     queryKey: ["/api/kommo/pipelines"],
     queryFn: async () => {
       const res = await fetch("/api/kommo/pipelines", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch pipelines");
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      if (!res.ok) {
+        let errorText = res.statusText;
+        try {
+          errorText = await responseClone.text();
+        } catch {
+          // If we can't read the text, use statusText
+        }
+        throw new Error(`Failed to fetch pipelines: ${res.status} ${errorText}`);
+      }
+      
       const data: PipelinesResponse = await res.json();
       return data._embedded?.pipelines || [];
     },
@@ -162,7 +228,19 @@ export default function AdminPage() {
     queryKey: ["/api/settings/pipeline-stage"],
     queryFn: async () => {
       const res = await fetch("/api/settings/pipeline-stage", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch settings");
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      if (!res.ok) {
+        let errorText = res.statusText;
+        try {
+          errorText = await responseClone.text();
+        } catch {
+          // If we can't read the text, use statusText
+        }
+        throw new Error(`Failed to fetch settings: ${res.status} ${errorText}`);
+      }
+      
       return res.json();
     },
     enabled: authData?.authenticated === true
@@ -187,7 +265,19 @@ export default function AdminPage() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to save settings");
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      if (!res.ok) {
+        let errorText = res.statusText;
+        try {
+          errorText = await responseClone.text();
+        } catch {
+          // If we can't read the text, use statusText
+        }
+        throw new Error(`Failed to save settings: ${res.status} ${errorText}`);
+      }
+      
       return res.json();
     },
     onSuccess: () => {
