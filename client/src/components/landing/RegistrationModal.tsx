@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
@@ -15,7 +15,21 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [job, setJob] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Check API health when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      api.test().then(isHealthy => {
+        if (!isHealthy) {
+          console.warn('⚠️ API server might not be running. Make sure to run: npm run dev:api');
+        } else {
+          console.log('✅ API server is running');
+        }
+      });
+    }
+  }, [isOpen]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow numbers
@@ -29,6 +43,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      console.log('Form is already submitting, ignoring duplicate click');
+      return;
+    }
+    
     if (phone.length !== 9) {
       toast({
         title: "Xatolik",
@@ -38,7 +58,11 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       return;
     }
 
+    setIsSubmitting(true);
+    
     try {
+      console.log('Submitting lead:', { name, phone: `+998${phone}`, job, source: 'registration' });
+      
       const response = await api.leads.create({ 
         name, 
         phone: `+998${phone}`, 
@@ -46,43 +70,85 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         source: 'registration'
       });
 
-      // Check if response is ok
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('API Error:', errorData);
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      console.log('Response status:', response.status, response.statusText);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      // Clone the response to read it safely
+      const responseClone = response.clone();
+      
+      let data;
+      try {
+        data = await response.json();
+        console.log('API Response:', data);
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        // Try to read as text if JSON parsing fails
+        try {
+          const text = await responseClone.text();
+          console.error('Response text:', text);
+          throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
+        } catch (textError) {
+          throw new Error('Failed to read response from server');
+        }
       }
 
-      const data = await response.json();
-      console.log('API Response:', data);
+      // Check if response is ok
+      if (!response.ok) {
+        console.error('API Error Response:', data);
+        throw new Error(data?.error || data?.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
 
       if (data.success || data.savedLocally) {
         toast({
           title: "Muvaffaqiyatli yuborildi!",
-          description: "Ma'lumotlaringiz qabul qilindi. Tez orada menejerlarimiz siz bilan bog'lanishadi.",
+          description: "Ma'lumotlaringiz qabul qilindi. Telegram kanalimizga qo'shiling!",
         });
         
-        onClose();
+        // Clear form
         setName("");
         setPhone("");
         setJob("");
+        
+        // Close modal after a short delay
+        setTimeout(() => {
+          onClose();
+          
+          // Redirect to Telegram after modal closes
+          setTimeout(() => {
+            window.open('https://t.me/najotnurnotiqlikmarkazi', '_blank');
+          }, 300);
+        }, 1500);
+        
       } else {
         toast({
           title: "Xatolik",
           description: data.message || data.error || "Ma'lumot yuborishda xatolik yuz berdi",
           variant: "destructive"
         });
+        setIsSubmitting(false);
       }
     } catch (error) {
-      console.error("Error submitting lead:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error("Full error details:", error);
+      console.error("Full error object:", error);
+      console.error("Error name:", error instanceof Error ? error.name : 'N/A');
+      console.error("Error message:", error instanceof Error ? error.message : 'Unknown');
+      console.error("Error stack:", error instanceof Error ? error.stack : 'N/A');
+      
+      let errorMessage = 'Noma\'lum xatolik';
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'Serverga ulanib bo\'lmadi. API server ishlamayaptimi?';
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
       
       toast({
         title: "Xatolik",
         description: `Ma'lumot yuborishda xatolik yuz berdi: ${errorMessage}. Iltimos qaytadan urinib ko'ring.`,
         variant: "destructive"
       });
+      setIsSubmitting(false);
     }
   };
 
@@ -136,8 +202,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           </div>
           
           <div className="pt-4">
-            <Button type="submit" className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold">
-              Yuborish
+            <Button 
+              type="submit" 
+              className="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Yuborilmoqda..." : "Yuborish"}
             </Button>
           </div>
         </form>
