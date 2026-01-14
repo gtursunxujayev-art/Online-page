@@ -73,46 +73,184 @@ export default async function handler(req, res) {
             }
           }
 
-          // Create contact in AmoCRM
-          const contactData = {
-            name: body.name,
-            custom_fields_values: [
-              {
-                field_id: 142993, // Phone field ID (common in AmoCRM)
-                values: [{ value: body.phone }]
-              },
-              {
-                field_id: 142995, // Position/Job field ID
-                values: [{ value: body.job }]
-              }
-            ]
-          };
-
-          // Create contact
-          const contactResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`, {
-            method: 'POST',
+          // First, try to find existing contact by phone
+          let contactId = null;
+          const searchResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts?query=${encodeURIComponent(body.phone)}`, {
+            method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
-            },
-            body: JSON.stringify([contactData])
+            }
           });
 
-          let contactId = null;
-          if (contactResponse.ok) {
-            const contactResult = await contactResponse.json();
-            contactId = contactResult._embedded?.contacts?.[0]?.id;
-            console.log('Contact created in AmoCRM:', contactId);
-          } else {
-            const errorText = await contactResponse.text();
-            console.error('Failed to create contact:', contactResponse.status, errorText);
+          if (searchResponse.ok) {
+            const searchResult = await searchResponse.json();
+            if (searchResult._embedded?.contacts?.length > 0) {
+              contactId = searchResult._embedded.contacts[0].id;
+              console.log('Found existing contact:', contactId);
+              
+              // Update existing contact with new info
+              const updateContactData = {
+                name: body.name,
+                custom_fields_values: [
+                  {
+                    field_id: 142993, // Phone field ID
+                    values: [{ value: body.phone }]
+                  },
+                  {
+                    field_id: 142995, // Position/Job field ID
+                    values: [{ value: body.job }]
+                  }
+                ]
+              };
+
+              const updateResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts/${contactId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateContactData)
+              });
+
+              if (!updateResponse.ok) {
+                const errorText = await updateResponse.text();
+                console.error('Failed to update contact:', updateResponse.status, errorText);
+              }
+            }
           }
 
-          // Create lead in AmoCRM
+          // If no existing contact found, create new one
+          if (!contactId) {
+            const contactData = {
+              name: body.name,
+              custom_fields_values: [
+                {
+                  field_id: 142993, // Phone field ID (common in AmoCRM)
+                  values: [{ value: body.phone }]
+                },
+                {
+                  field_id: 142995, // Position/Job field ID
+                  values: [{ value: body.job }]
+                }
+              ]
+            };
+
+            // Create contact
+            const contactResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify([contactData])
+            });
+
+            if (contactResponse.ok) {
+              const contactResult = await contactResponse.json();
+              contactId = contactResult._embedded?.contacts?.[0]?.id;
+              console.log('Contact created in AmoCRM:', contactId);
+            } else {
+              const errorText = await contactResponse.text();
+              console.error('Failed to create contact:', contactResponse.status, errorText);
+            }
+          }
+
+          // Create lead in AmoCRM with all details
+          const leadName = `Заявка с сайта: ${body.name}`;
+          
+          // Prepare custom fields for the lead
+          const customFields = [];
+          
+          // Add job/position field (from your existing field)
+          customFields.push({
+            field_id: 142273, // Job field ID - keep your existing one
+            values: [{ value: body.job }]
+          });
+          
+          // Add phone field to lead as well (in case contact creation failed)
+          customFields.push({
+            field_id: 142993, // Phone field ID - same as contact
+            values: [{ value: body.phone }]
+          });
+          
+          // Add UTM fields if provided
+          if (body.utm_source) {
+            customFields.push({
+              field_id: 1112343, // utm_source field ID from your AmoCRM
+              values: [{ value: body.utm_source }]
+            });
+          }
+          
+          if (body.utm_medium) {
+            customFields.push({
+              field_id: 1112339, // utm_medium field ID
+              values: [{ value: body.utm_medium }]
+            });
+          }
+          
+          if (body.utm_campaign) {
+            customFields.push({
+              field_id: 1112341, // utm_campaign field ID
+              values: [{ value: body.utm_campaign }]
+            });
+          }
+          
+          if (body.utm_content) {
+            customFields.push({
+              field_id: 1112337, // utm_content field ID
+              values: [{ value: body.utm_content }]
+            });
+          }
+          
+          if (body.utm_referrer) {
+            customFields.push({
+              field_id: 1112347, // utm_referrer field ID
+              values: [{ value: body.utm_referrer }]
+            });
+          }
+          
+          if (body.referrer) {
+            customFields.push({
+              field_id: 1112351, // referrer field ID
+              values: [{ value: body.referrer }]
+            });
+          }
+          
+          if (body.form) {
+            customFields.push({
+              field_id: 1112361, // form field ID
+              values: [{ value: body.form }]
+            });
+          }
+          
+          if (body.fbclid) {
+            customFields.push({
+              field_id: 1112373, // fbclid field ID
+              values: [{ value: body.fbclid }]
+            });
+          }
+          
+          // Add source (original source field)
+          if (body.source) {
+            customFields.push({
+              field_id: 142271, // Your existing source field ID
+              values: [{ value: body.source }]
+            });
+          }
+          
+          // Add timestamp/notes
+          customFields.push({
+            field_id: 142275, // Notes field ID
+            values: [{ value: `Submitted: ${new Date().toISOString()}\nName: ${body.name}\nPhone: ${body.phone}\nJob: ${body.job}` }]
+          });
+
           const leadData = {
-            name: `Lead from website: ${body.name}`,
+            name: leadName,
+            price: 0,
             pipeline_id: pipelineId ? parseInt(pipelineId) : undefined,
             status_id: statusId ? parseInt(statusId) : undefined,
+            custom_fields_values: customFields,
             _embedded: contactId ? {
               contacts: [{ id: contactId }]
             } : undefined
