@@ -30,7 +30,7 @@ const defaultContent = {
       "Ishonchli, ravon va ta'sirchan nutq"
     ],
     heroImage: "https://i.ibb.co/3ySvdQ0t/photo-2025-12-06-18-38-33.jpg",
-    heroVideoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    heroVideoUrl: "" // Empty for now - will be filled when video is ready
   },
   // ... (other sections would be here)
 };
