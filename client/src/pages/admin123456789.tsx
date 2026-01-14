@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Save, RefreshCw, Users, Settings, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchWithBaseUrl } from "@/lib/api";
 
 interface Lead {
   id: string;
@@ -67,7 +68,7 @@ export default function AdminPage() {
   const { data: authData, isLoading: authLoading } = useQuery({
     queryKey: ["/api/auth/check"],
     queryFn: async () => {
-      const res = await fetch("/api/auth/check", { credentials: "include" });
+      const res = await fetchWithBaseUrl("/api/auth/check", { credentials: "include" });
       // Clone the response to read it safely
       const responseClone = res.clone();
       
@@ -93,7 +94,7 @@ export default function AdminPage() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      const res = await fetchWithBaseUrl("/api/auth/logout", { method: "POST", credentials: "include" });
       // Clone the response to read it safely
       const responseClone = res.clone();
       
@@ -120,7 +121,7 @@ export default function AdminPage() {
 
   const credentialsMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newUsername?: string; newPassword?: string }) => {
-      const res = await fetch("/api/auth/credentials", {
+      const res = await fetchWithBaseUrl("/api/auth/credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -182,7 +183,7 @@ export default function AdminPage() {
   const { data: leads = [], isLoading: leadsLoading, refetch: refetchLeads, error: leadsError } = useQuery<Lead[]>({
     queryKey: ["/api/leads"],
     queryFn: async () => {
-      const res = await fetch("/api/leads", { credentials: "include" });
+      const res = await fetchWithBaseUrl("/api/leads", { credentials: "include" });
       // Clone the response to read it safely
       const responseClone = res.clone();
       
@@ -204,7 +205,7 @@ export default function AdminPage() {
   const { data: pipelines = [], isLoading: pipelinesLoading, error: pipelinesError } = useQuery<Pipeline[]>({
     queryKey: ["/api/kommo/pipelines"],
     queryFn: async () => {
-      const res = await fetch("/api/kommo/pipelines", { credentials: "include" });
+      const res = await fetchWithBaseUrl("/api/kommo/pipelines", { credentials: "include" });
       // Clone the response to read it safely
       const responseClone = res.clone();
       
@@ -227,7 +228,7 @@ export default function AdminPage() {
   const { data: pipelineSettings } = useQuery({
     queryKey: ["/api/settings/pipeline-stage"],
     queryFn: async () => {
-      const res = await fetch("/api/settings/pipeline-stage", { credentials: "include" });
+      const res = await fetchWithBaseUrl("/api/settings/pipeline-stage", { credentials: "include" });
       // Clone the response to read it safely
       const responseClone = res.clone();
       
@@ -259,7 +260,7 @@ export default function AdminPage() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: { pipelineId: number; statusId: number }) => {
-      const res = await fetch("/api/settings/pipeline-stage", {
+      const res = await fetchWithBaseUrl("/api/settings/pipeline-stage", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
