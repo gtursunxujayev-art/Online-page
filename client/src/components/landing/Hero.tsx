@@ -51,14 +51,17 @@ export default function Hero() {
             >
               {content.hero.ctaPrimary}
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-white text-white hover:bg-white/10 hover:text-white font-medium text-lg px-8 h-14 rounded-full backdrop-blur-sm"
-              onClick={() => setIsVideoOpen(true)}
-            >
-              <Play className="mr-2 h-5 w-5 fill-current" /> {content.hero.ctaSecondary}
-            </Button>
+            {/* Only show video button if heroVideoUrl is not empty */}
+            {content.hero.heroVideoUrl && content.hero.heroVideoUrl.trim() !== "" && (
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white text-white hover:bg-white/10 hover:text-white font-medium text-lg px-8 h-14 rounded-full backdrop-blur-sm"
+                onClick={() => setIsVideoOpen(true)}
+              >
+                <Play className="mr-2 h-5 w-5 fill-current" /> {content.hero.ctaSecondary}
+              </Button>
+            )}
           </div>
 
           {/* Promises List */}
