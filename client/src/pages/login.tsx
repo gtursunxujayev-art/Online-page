@@ -25,7 +25,23 @@ export default function LoginPage() {
         credentials: "include",
       });
 
-      const data = await res.json();
+      // Clone the response to read it safely
+      const responseClone = res.clone();
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        // Try to read as text if JSON parsing fails
+        try {
+          const text = await responseClone.text();
+          console.error('Response text:', text);
+          throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
+        } catch (textError) {
+          throw new Error('Failed to read response from server');
+        }
+      }
 
       if (res.ok) {
         toast({ title: "Muvaffaqiyat", description: data.message });
