@@ -23,8 +23,8 @@ const leadSchema = z.object({
   gclid: z.string().optional(),
 });
 
-// Helper function to create or update contact in amoCRM
-async function createOrUpdateContact(
+// Helper function to create contact in amoCRM
+async function createContact(
   cleanSubdomain: string,
   accessToken: string,
   name: string,
@@ -38,95 +38,72 @@ async function createOrUpdateContact(
     const contactsUrl = `https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`;
     console.log('Contacts URL:', contactsUrl);
     
-    // Search for existing contact by phone using simple query
-    const searchUrl = `${contactsUrl}?query=${encodeURIComponent(phone)}`;
-    console.log('Search URL:', searchUrl);
+    console.log('Creating new contact (skipping search for now)...');
     
-    const searchResponse = await fetch(searchUrl, {
+    // Use standard amoCRM PHONE field format with enum_code
+    // Also try with first_name/last_name instead of just name
+    const contactData = {
+      name: name,
+      // Try splitting name into first_name and last_name
+      first_name: name.split(' ')[0] || name,
+      last_name: name.split(' ').slice(1).join(' ') || 'Not provided',
+      custom_fields_values: [
+        {
+          field_code: "PHONE",
+          values: [{ 
+            value: phone,
+            enum_code: "MOB"  // Mobile phone type
+          }]
+        }
+      ]
+    };
+
+    console.log('Creating contact with data:', JSON.stringify([contactData], null, 2));
+    
+    const createResponse = await fetch(contactsUrl, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify([contactData])
     });
 
-    console.log('Contact search - Status:', searchResponse.status);
-    const searchResponseText = await searchResponse.text();
-    console.log('Contact search - Response:', searchResponseText);
+    const createResponseText = await createResponse.text();
+    console.log('Contact creation - Status:', createResponse.status);
+    console.log('Contact creation - Response (first 500 chars):', createResponseText.substring(0, 500));
+    console.log('Contact creation - Full response length:', createResponseText.length);
 
-    let contactId: number | null = null;
-
-    if (searchResponse.ok && searchResponseText) {
+    if (createResponse.ok) {
       try {
-        const searchResult = JSON.parse(searchResponseText) as any;
-        console.log('Search result parsed:', searchResult);
+        const createResult = JSON.parse(createResponseText) as any;
+        console.log('Contact creation parsed successfully');
+        console.log('Create result keys:', Object.keys(createResult));
+        console.log('Create result _embedded keys:', createResult._embedded ? Object.keys(createResult._embedded) : 'No _embedded');
         
-        const existingContacts = searchResult._embedded?.contacts;
-        console.log('Existing contacts found:', existingContacts?.length || 0);
-        
-        if (existingContacts && existingContacts.length > 0) {
-          // Use existing contact - no need to update
-          contactId = existingContacts[0].id;
-          console.log('Found existing contact ID:', contactId);
-          console.log('✅ Using existing contact');
-        }
-      } catch (parseError) {
-        console.log('No contacts found or empty response');
-      }
-    }
-
-    // If no existing contact, create new one
-    if (!contactId) {
-      console.log('Creating new contact...');
-      
-      // Use standard amoCRM PHONE field format with enum_code
-      const contactData = {
-        name: name,
-        custom_fields_values: [
-          {
-            field_code: "PHONE",
-            values: [{ 
-              value: phone,
-              enum_code: "MOB"  // Mobile phone type
-            }]
-          }
-        ]
-      };
-
-      console.log('Creating contact with data:', JSON.stringify([contactData], null, 2));
-      
-      const createResponse = await fetch(contactsUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify([contactData])
-      });
-
-      const createResponseText = await createResponse.text();
-      console.log('Contact creation - Status:', createResponse.status);
-      console.log('Contact creation - Response:', createResponseText);
-
-      if (createResponse.ok) {
-        try {
-          const createResult = JSON.parse(createResponseText) as any;
-          contactId = createResult._embedded?.contacts?.[0]?.id;
+        const contactId = createResult._embedded?.contacts?.[0]?.id;
+        if (contactId) {
           console.log('✅ Contact created successfully, ID:', contactId);
-        } catch (parseError) {
-          console.error('Failed to parse create response:', parseError);
+          console.log('Created contact details:', createResult._embedded?.contacts?.[0]);
+          console.log('=== CONTACT CREATION COMPLETE ===');
+          return contactId;
+        } else {
+          console.error('❌ Contact creation succeeded but no contact ID returned');
+          console.log('Full create result:', createResult);
           return null;
         }
-      } else {
-        console.error('❌ Failed to create contact');
+      } catch (parseError) {
+        console.error('Failed to parse create response:', parseError);
+        console.log('Raw response that failed to parse:', createResponseText);
         return null;
       }
+    } else {
+      console.error('❌ Failed to create contact - HTTP error');
+      console.log('Full error response:', createResponseText);
+      return null;
     }
-
-    console.log('=== CONTACT CREATION COMPLETE ===');
-    console.log('Final contact ID:', contactId);
-    return contactId;
   } catch (error) {
-    console.error('Error in createOrUpdateContact:', error);
+    console.error('Error in createContact:', error);
     return null;
   }
 }
@@ -236,9 +213,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
           }
 
-          // Step 1: Create or update contact
-          console.log('=== Step 1: Creating/updating contact ===');
-          const contactId = await createOrUpdateContact(
+          // Step 1: Create contact
+          console.log('=== Step 1: Creating contact ===');
+          const contactId = await createContact(
             cleanSubdomain,
             accessToken,
             leadData.name,
@@ -353,7 +330,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           const responseText = await leadResponse.text();
           console.log('Lead creation - Status:', leadResponse.status);
-          console.log('Lead creation - Response:', responseText);
+          console.log('Lead creation - Response (first 500 chars):', responseText.substring(0, 500));
+          console.log('Lead creation - Full response length:', responseText.length);
 
           let leadId: number | null = null;
           let contactLinked = false;
@@ -361,8 +339,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (leadResponse.ok) {
             try {
               const result = JSON.parse(responseText) as any;
+              console.log('Lead creation parsed successfully');
+              console.log('Lead result keys:', Object.keys(result));
+              console.log('Lead result _embedded keys:', result._embedded ? Object.keys(result._embedded) : 'No _embedded');
+              
               leadId = result._embedded?.leads?.[0]?.id;
-              console.log('✅ Lead created successfully:', leadId);
+              if (leadId) {
+                console.log('✅ Lead created successfully, ID:', leadId);
+                console.log('Created lead details:', result._embedded?.leads?.[0]);
+              } else {
+                console.error('❌ Lead creation succeeded but no lead ID returned');
+                console.log('Full lead result:', result);
+              }
               
               // Step 4: Link contact to lead if we have both IDs
               if (leadId && contactId) {
@@ -391,13 +379,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 
                 const linkResponseText = await linkResponse.text();
                 console.log('Link response - Status:', linkResponse.status);
-                console.log('Link response - Body:', linkResponseText);
+                console.log('Link response - Body (first 500 chars):', linkResponseText.substring(0, 500));
+                console.log('Link response - Full response length:', linkResponseText.length);
                 
                 if (linkResponse.ok) {
                   console.log('✅ Contact linked to lead successfully');
                   contactLinked = true;
+                  try {
+                    const linkResult = JSON.parse(linkResponseText) as any;
+                    console.log('Link result:', linkResult);
+                  } catch (e) {
+                    console.log('Link response not JSON or empty');
+                  }
                 } else {
                   console.error('❌ Failed to link contact to lead');
+                  console.log('Full link error response:', linkResponseText);
                 }
               }
               
