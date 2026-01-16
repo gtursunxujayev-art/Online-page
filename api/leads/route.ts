@@ -17,6 +17,10 @@ const leadSchema = z.object({
   roistat: z.string().optional(),
   referrer: z.string().optional(),
   openstat_service: z.string().optional(),
+  // Additional tracking fields from frontend
+  form: z.string().optional(),
+  fbclid: z.string().optional(),
+  gclid: z.string().optional(),
 });
 
 // Helper function to create or update contact in amoCRM
@@ -24,33 +28,19 @@ async function createOrUpdateContact(
   cleanSubdomain: string,
   accessToken: string,
   name: string,
-  phone: string,
-  job: string
+  phone: string
 ): Promise<number | null> {
   try {
     console.log('=== CONTACT CREATION DEBUG ===');
-    console.log('Parameters:', { cleanSubdomain, name, phone, job });
+    console.log('Parameters:', { cleanSubdomain, name, phone });
     console.log('Access token present:', !!accessToken);
     
     const contactsUrl = `https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`;
     console.log('Contacts URL:', contactsUrl);
     
-    // Search for existing contact by phone using filter by custom field
-    // amoCRM API v4 requires using filter with custom field ID
-    const filterPayload = {
-      filter: {
-        custom_fields_values: [
-          {
-            field_id: 1112329, // Phone field ID
-            values: [phone]
-          }
-        ]
-      }
-    };
-    
-    const searchUrl = `${contactsUrl}?filter=${encodeURIComponent(JSON.stringify(filterPayload.filter))}`;
-    console.log('Search URL with filter:', searchUrl);
-    console.log('Filter payload:', JSON.stringify(filterPayload, null, 2));
+    // Search for existing contact by phone using simple query
+    const searchUrl = `${contactsUrl}?query=${encodeURIComponent(phone)}`;
+    console.log('Search URL:', searchUrl);
     
     const searchResponse = await fetch(searchUrl, {
       headers: {
@@ -65,7 +55,7 @@ async function createOrUpdateContact(
 
     let contactId: number | null = null;
 
-    if (searchResponse.ok) {
+    if (searchResponse.ok && searchResponseText) {
       try {
         const searchResult = JSON.parse(searchResponseText) as any;
         console.log('Search result parsed:', searchResult);
@@ -74,65 +64,30 @@ async function createOrUpdateContact(
         console.log('Existing contacts found:', existingContacts?.length || 0);
         
         if (existingContacts && existingContacts.length > 0) {
-          // Update existing contact
+          // Use existing contact - no need to update
           contactId = existingContacts[0].id;
           console.log('Found existing contact ID:', contactId);
-          
-          const updateData = {
-            name: name,
-            custom_fields_values: [
-              {
-                field_id: 1112329, // Phone field
-                values: [{ value: phone }]
-              },
-              {
-                field_id: 1416915, // Job field
-                values: [{ value: job }]
-              }
-            ]
-          };
-
-          console.log('Updating contact with data:', JSON.stringify(updateData, null, 2));
-          
-          const updateResponse = await fetch(`${contactsUrl}/${contactId}`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(updateData)
-          });
-
-          const updateResponseText = await updateResponse.text();
-          console.log('Contact update - Status:', updateResponse.status);
-          console.log('Contact update - Response:', updateResponseText);
-
-          if (updateResponse.ok) {
-            console.log('✅ Contact updated successfully');
-          } else {
-            console.error('❌ Failed to update contact');
-          }
+          console.log('✅ Using existing contact');
         }
       } catch (parseError) {
-        console.error('Failed to parse search response:', parseError);
+        console.log('No contacts found or empty response');
       }
-    } else {
-      console.error('❌ Contact search failed');
     }
 
     // If no existing contact, create new one
     if (!contactId) {
       console.log('Creating new contact...');
+      
+      // Use standard amoCRM PHONE field format with enum_code
       const contactData = {
         name: name,
         custom_fields_values: [
           {
-            field_id: 1112329, // Phone field
-            values: [{ value: phone }]
-          },
-          {
-            field_id: 1416915, // Job field
-            values: [{ value: job }]
+            field_code: "PHONE",
+            values: [{ 
+              value: phone,
+              enum_code: "MOB"  // Mobile phone type
+            }]
           }
         ]
       };
@@ -287,16 +242,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             cleanSubdomain,
             accessToken,
             leadData.name,
-            leadData.phone,
-            leadData.job
+            leadData.phone
           );
 
           if (!contactId) {
             console.error('❌ Failed to create/update contact, but will try to create lead anyway');
           }
 
-          // Step 2: Build custom fields array for lead (UTM tracking and referrer)
+          // Step 2: Build custom fields array for lead (phone, job, UTM tracking and referrer)
           const customFields: Array<{ field_id: number; values: Array<{ value: string }> }> = [];
+          
+          // Add phone field to lead
+          customFields.push({
+            field_id: 1112329, // Phone field on lead
+            values: [{ value: leadData.phone }]
+          });
+          
+          // Add job field to lead
+          customFields.push({
+            field_id: 1416915, // Job field on lead
+            values: [{ value: leadData.job }]
+          });
           
           // Add UTM tracking fields if they exist
           if (leadData.utm_content) {
@@ -354,8 +320,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
           }
 
-          // Step 3: Create lead with contact attached and custom fields
-          console.log('=== Step 2: Creating lead with contact and UTM fields ===');
+          // Step 3: Create lead with custom fields (without contact - will link separately)
+          console.log('=== Step 2: Creating lead with UTM fields ===');
           
           const leadDataPayload: any = {
             name: `Заявка с сайта: ${leadData.name}`,
@@ -364,20 +330,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             status_id: statusId ? parseInt(statusId) : undefined,
           };
 
-          // Attach contact if we have one
-          if (contactId) {
-            leadDataPayload._embedded = {
-              contacts: [{ id: contactId }]
-            };
-          }
-
           // Add custom fields if any
           if (customFields.length > 0) {
             leadDataPayload.custom_fields_values = customFields;
           }
 
           console.log('=== LEAD CREATION PAYLOAD DEBUG ===');
-          console.log('Contact ID for attachment:', contactId);
+          console.log('Contact ID to link later:', contactId);
           console.log('Custom fields count:', customFields.length);
           console.log('Custom fields:', customFields);
           console.log('Full lead payload:', JSON.stringify([leadDataPayload], null, 2));
@@ -396,17 +355,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log('Lead creation - Status:', leadResponse.status);
           console.log('Lead creation - Response:', responseText);
 
+          let leadId: number | null = null;
+          let contactLinked = false;
+
           if (leadResponse.ok) {
             try {
               const result = JSON.parse(responseText) as any;
-              const leadId = result._embedded?.leads?.[0]?.id;
-              console.log('✅ Lead created successfully with contact and UTM fields:', leadId);
+              leadId = result._embedded?.leads?.[0]?.id;
+              console.log('✅ Lead created successfully:', leadId);
+              
+              // Step 4: Link contact to lead if we have both IDs
+              if (leadId && contactId) {
+                console.log('=== Step 3: Linking contact to lead ===');
+                console.log(`Linking contact ${contactId} to lead ${leadId}`);
+                
+                const linkUrl = `https://${cleanSubdomain}.amocrm.ru/api/v4/leads/${leadId}/link`;
+                const linkPayload = [
+                  {
+                    to_entity_id: contactId,
+                    to_entity_type: "contacts"
+                  }
+                ];
+                
+                console.log('Link URL:', linkUrl);
+                console.log('Link payload:', JSON.stringify(linkPayload, null, 2));
+                
+                const linkResponse = await fetch(linkUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(linkPayload)
+                });
+                
+                const linkResponseText = await linkResponse.text();
+                console.log('Link response - Status:', linkResponse.status);
+                console.log('Link response - Body:', linkResponseText);
+                
+                if (linkResponse.ok) {
+                  console.log('✅ Contact linked to lead successfully');
+                  contactLinked = true;
+                } else {
+                  console.error('❌ Failed to link contact to lead');
+                }
+              }
+              
               amoCRMResult = {
                 attempted: true,
                 success: true,
                 leadId: leadId,
                 contactId: contactId,
-                message: `Lead created with contact${contactId ? ' attached' : ' (contact creation failed)'} and ${customFields.length} tracking fields`
+                contactLinked: contactLinked,
+                message: `Lead created${contactLinked ? ' with contact linked' : contactId ? ' (contact link failed)' : ' (no contact)'} and ${customFields.length} tracking fields`
               };
             } catch (parseError) {
               console.error('Failed to parse response:', parseError);
