@@ -7,7 +7,123 @@ const leadSchema = z.object({
   phone: z.string().regex(/^\+998\d{9}$/, "Phone must be in format +998XXXXXXXXX"),
   job: z.string().min(1, "Job is required"),
   source: z.string().optional().default("website"),
+  // UTM tracking parameters
+  utm_source: z.string().optional(),
+  utm_medium: z.string().optional(),
+  utm_campaign: z.string().optional(),
+  utm_content: z.string().optional(),
+  utm_term: z.string().optional(),
+  utm_referrer: z.string().optional(),
+  roistat: z.string().optional(),
+  referrer: z.string().optional(),
+  openstat_service: z.string().optional(),
 });
+
+// Helper function to create or update contact in amoCRM
+async function createOrUpdateContact(
+  cleanSubdomain: string,
+  accessToken: string,
+  name: string,
+  phone: string,
+  job: string
+): Promise<number | null> {
+  try {
+    const contactsUrl = `https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`;
+    
+    // Search for existing contact by phone
+    const searchResponse = await fetch(`${contactsUrl}?query=${encodeURIComponent(phone)}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    let contactId: number | null = null;
+
+    if (searchResponse.ok) {
+      const searchResult = await searchResponse.json();
+      const existingContacts = searchResult._embedded?.contacts;
+      
+      if (existingContacts && existingContacts.length > 0) {
+        // Update existing contact
+        contactId = existingContacts[0].id;
+        console.log('Found existing contact:', contactId);
+        
+        const updateData = {
+          name: name,
+          custom_fields_values: [
+            {
+              field_id: 1112329, // Phone field
+              values: [{ value: phone }]
+            },
+            {
+              field_id: 1416915, // Job field
+              values: [{ value: job }]
+            }
+          ]
+        };
+
+        const updateResponse = await fetch(`${contactsUrl}/${contactId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updateData)
+        });
+
+        if (updateResponse.ok) {
+          console.log('✅ Contact updated successfully');
+        } else {
+          const updateText = await updateResponse.text();
+          console.error('Failed to update contact:', updateText);
+        }
+      }
+    }
+
+    // If no existing contact, create new one
+    if (!contactId) {
+      console.log('Creating new contact...');
+      const contactData = {
+        name: name,
+        custom_fields_values: [
+          {
+            field_id: 1112329, // Phone field
+            values: [{ value: phone }]
+          },
+          {
+            field_id: 1416915, // Job field
+            values: [{ value: job }]
+          }
+        ]
+      };
+
+      const createResponse = await fetch(contactsUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([contactData])
+      });
+
+      if (createResponse.ok) {
+        const createResult = await createResponse.json();
+        contactId = createResult._embedded?.contacts?.[0]?.id;
+        console.log('✅ Contact created successfully:', contactId);
+      } else {
+        const createText = await createResponse.text();
+        console.error('Failed to create contact:', createText);
+        return null;
+      }
+    }
+
+    return contactId;
+  } catch (error) {
+    console.error('Error in createOrUpdateContact:', error);
+    return null;
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -61,6 +177,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         phone: leadData.phone,
         job: leadData.job,
         source: leadData.source,
+        utm: {
+          utm_source: leadData.utm_source,
+          utm_medium: leadData.utm_medium,
+          utm_campaign: leadData.utm_campaign,
+          utm_content: leadData.utm_content,
+          utm_term: leadData.utm_term,
+          utm_referrer: leadData.utm_referrer,
+          roistat: leadData.roistat,
+          referrer: leadData.referrer,
+          openstat_service: leadData.openstat_service,
+        },
         timestamp: new Date().toISOString()
       });
 
@@ -87,18 +214,102 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
           }
 
-          // SIMPLE APPROACH: Create lead with minimal data first
-          console.log('=== SIMPLE APPROACH: Creating basic lead ===');
+          // Step 1: Create or update contact
+          console.log('=== Step 1: Creating/updating contact ===');
+          const contactId = await createOrUpdateContact(
+            cleanSubdomain,
+            accessToken,
+            leadData.name,
+            leadData.phone,
+            leadData.job
+          );
+
+          if (!contactId) {
+            console.error('❌ Failed to create/update contact, but will try to create lead anyway');
+          }
+
+          // Step 2: Build custom fields array for lead (UTM tracking and referrer)
+          const customFields: Array<{ field_id: number; values: Array<{ value: string }> }> = [];
           
-          // First, try to create a simple lead (no custom fields)
-          const simpleLeadData = {
+          // Add UTM tracking fields if they exist
+          if (leadData.utm_content) {
+            customFields.push({
+              field_id: 1112337, // utm_content
+              values: [{ value: leadData.utm_content }]
+            });
+          }
+          if (leadData.utm_medium) {
+            customFields.push({
+              field_id: 1112339, // utm_medium
+              values: [{ value: leadData.utm_medium }]
+            });
+          }
+          if (leadData.utm_campaign) {
+            customFields.push({
+              field_id: 1112341, // utm_campaign
+              values: [{ value: leadData.utm_campaign }]
+            });
+          }
+          if (leadData.utm_source) {
+            customFields.push({
+              field_id: 1112343, // utm_source
+              values: [{ value: leadData.utm_source }]
+            });
+          }
+          if (leadData.utm_term) {
+            customFields.push({
+              field_id: 1112345, // utm_term
+              values: [{ value: leadData.utm_term }]
+            });
+          }
+          if (leadData.utm_referrer) {
+            customFields.push({
+              field_id: 1112347, // utm_referrer
+              values: [{ value: leadData.utm_referrer }]
+            });
+          }
+          if (leadData.roistat) {
+            customFields.push({
+              field_id: 1112349, // roistat
+              values: [{ value: leadData.roistat }]
+            });
+          }
+          if (leadData.referrer) {
+            customFields.push({
+              field_id: 1112351, // referrer
+              values: [{ value: leadData.referrer }]
+            });
+          }
+          if (leadData.openstat_service) {
+            customFields.push({
+              field_id: 1112353, // openstat_service
+              values: [{ value: leadData.openstat_service }]
+            });
+          }
+
+          // Step 3: Create lead with contact attached and custom fields
+          console.log('=== Step 2: Creating lead with contact and UTM fields ===');
+          
+          const leadDataPayload: any = {
             name: `Заявка с сайта: ${leadData.name}`,
             price: 0,
             pipeline_id: pipelineId ? parseInt(pipelineId) : undefined,
             status_id: statusId ? parseInt(statusId) : undefined,
           };
 
-          console.log('Creating simple lead:', JSON.stringify([simpleLeadData], null, 2));
+          // Attach contact if we have one
+          if (contactId) {
+            leadDataPayload._embedded = {
+              contacts: [{ id: contactId }]
+            };
+          }
+
+          // Add custom fields if any
+          if (customFields.length > 0) {
+            leadDataPayload.custom_fields_values = customFields;
+          }
+
+          console.log('Creating lead:', JSON.stringify([leadDataPayload], null, 2));
           
           const leadResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads`, {
             method: 'POST',
@@ -106,108 +317,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify([simpleLeadData])
+            body: JSON.stringify([leadDataPayload])
           });
 
           const responseText = await leadResponse.text();
           console.log('Lead creation - Status:', leadResponse.status);
           console.log('Lead creation - Response:', responseText);
 
-          let leadId: number | null = null;
-          
           if (leadResponse.ok) {
             try {
               const result = JSON.parse(responseText);
-              leadId = result._embedded?.leads?.[0]?.id;
-              console.log('✅ Simple lead created successfully:', leadId);
-              
-              // Now try to add custom fields
-              console.log('=== Adding custom fields ===');
-              
-              // Try adding phone field first (most important)
-              const updateData = {
-                custom_fields_values: [
-                  {
-                    field_id: 1112329, // Phone field
-                    values: [{ value: leadData.phone }]
-                  }
-                ]
+              const leadId = result._embedded?.leads?.[0]?.id;
+              console.log('✅ Lead created successfully with contact and UTM fields:', leadId);
+              amoCRMResult = {
+                attempted: true,
+                success: true,
+                leadId: leadId,
+                contactId: contactId,
+                message: `Lead created with contact${contactId ? ' attached' : ' (contact creation failed)'} and ${customFields.length} tracking fields`
               };
-              
-              console.log('Adding phone field:', JSON.stringify(updateData, null, 2));
-              
-              const updateResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads/${leadId}`, {
-                method: 'PATCH',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateData)
-              });
-              
-              const updateResponseText = await updateResponse.text();
-              console.log('Update phone - Status:', updateResponse.status);
-              console.log('Update phone - Response:', updateResponseText);
-              
-              if (updateResponse.ok) {
-                console.log('✅ Phone field added successfully');
-                
-                // Try adding job field
-                const updateJobData = {
-                  custom_fields_values: [
-                    {
-                      field_id: 1112329, // Keep phone
-                      values: [{ value: leadData.phone }]
-                    },
-                    {
-                      field_id: 1416915, // Add job
-                      values: [{ value: leadData.job }]
-                    }
-                  ]
-                };
-                
-                console.log('Adding job field:', JSON.stringify(updateJobData, null, 2));
-                
-                const updateJobResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads/${leadId}`, {
-                  method: 'PATCH',
-                  headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(updateJobData)
-                });
-                
-                const updateJobResponseText = await updateJobResponse.text();
-                console.log('Update job - Status:', updateJobResponse.status);
-                console.log('Update job - Response:', updateJobResponseText);
-                
-                if (updateJobResponse.ok) {
-                  console.log('✅ Job field added successfully');
-                  amoCRMResult = {
-                    attempted: true,
-                    success: true,
-                    leadId: leadId,
-                    message: 'Lead created with all fields'
-                  };
-                } else {
-                  console.log('⚠️ Lead created but job field failed');
-                  amoCRMResult = {
-                    attempted: true,
-                    success: true,
-                    leadId: leadId,
-                    message: 'Lead created with phone only (job field failed)'
-                  };
-                }
-              } else {
-                console.log('⚠️ Lead created but phone field failed');
-                amoCRMResult = {
-                  attempted: true,
-                  success: true,
-                  leadId: leadId,
-                  message: 'Lead created without custom fields'
-                };
-              }
-              
             } catch (parseError) {
               console.error('Failed to parse response:', parseError);
               amoCRMResult = {
@@ -217,66 +345,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               };
             }
           } else {
-            console.error('❌ Simple lead creation failed:', responseText);
-            
-            // Try alternative: create lead with phone field only
-            console.log('=== ALTERNATIVE: Trying with phone field ===');
-            
-            const phoneLeadData = {
-              name: `Заявка с сайта: ${leadData.name}`,
-              price: 0,
-              pipeline_id: pipelineId ? parseInt(pipelineId) : undefined,
-              status_id: statusId ? parseInt(statusId) : undefined,
-              custom_fields_values: [
-                {
-                  field_id: 1112329, // Phone field only
-                  values: [{ value: leadData.phone }]
-                }
-              ]
+            console.error('❌ Lead creation failed:', responseText);
+            amoCRMResult = {
+              attempted: true,
+              success: false,
+              error: `AmoCRM error: ${leadResponse.status} ${responseText.substring(0, 200)}`
             };
-            
-            console.log('Creating lead with phone:', JSON.stringify([phoneLeadData], null, 2));
-            
-            const phoneResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify([phoneLeadData])
-            });
-            
-            const phoneResponseText = await phoneResponse.text();
-            console.log('Phone lead - Status:', phoneResponse.status);
-            console.log('Phone lead - Response:', phoneResponseText);
-            
-            if (phoneResponse.ok) {
-              try {
-                const phoneResult = JSON.parse(phoneResponseText);
-                leadId = phoneResult._embedded?.leads?.[0]?.id;
-                console.log('✅ Lead created with phone:', leadId);
-                amoCRMResult = {
-                  attempted: true,
-                  success: true,
-                  leadId: leadId,
-                  message: 'Lead created with phone field'
-                };
-              } catch (phoneParseError) {
-                console.error('Failed to parse phone response:', phoneParseError);
-                amoCRMResult = {
-                  attempted: true,
-                  success: false,
-                  error: `Failed to parse AmoCRM response: ${phoneParseError instanceof Error ? phoneParseError.message : 'Unknown error'}`
-                };
-              }
-            } else {
-              console.error('❌ All attempts failed');
-              amoCRMResult = {
-                attempted: true,
-                success: false,
-                error: `AmoCRM error: ${leadResponse.status} ${responseText.substring(0, 200)}`
-              };
-            }
           }
 
         } catch (amoError) {
