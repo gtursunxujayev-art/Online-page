@@ -41,7 +41,7 @@ async function createOrUpdateContact(
     let contactId: number | null = null;
 
     if (searchResponse.ok) {
-      const searchResult = await searchResponse.json();
+      const searchResult = await searchResponse.json() as any;
       const existingContacts = searchResult._embedded?.contacts;
       
       if (existingContacts && existingContacts.length > 0) {
@@ -108,7 +108,7 @@ async function createOrUpdateContact(
       });
 
       if (createResponse.ok) {
-        const createResult = await createResponse.json();
+        const createResult = await createResponse.json() as any;
         contactId = createResult._embedded?.contacts?.[0]?.id;
         console.log('✅ Contact created successfully:', contactId);
       } else {
@@ -326,7 +326,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           if (leadResponse.ok) {
             try {
-              const result = JSON.parse(responseText);
+              const result = JSON.parse(responseText) as any;
               const leadId = result._embedded?.leads?.[0]?.id;
               console.log('✅ Lead created successfully with contact and UTM fields:', leadId);
               amoCRMResult = {
