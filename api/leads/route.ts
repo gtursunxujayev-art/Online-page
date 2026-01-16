@@ -128,7 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               const updateData = {
                 custom_fields_values: [
                   {
-                    field_id: 142993, // Phone field
+                    field_id: 1112329, // Phone field
                     values: [{ value: leadData.phone }]
                   }
                 ]
@@ -156,11 +156,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 const updateJobData = {
                   custom_fields_values: [
                     {
-                      field_id: 142993, // Keep phone
+                      field_id: 1112329, // Keep phone
                       values: [{ value: leadData.phone }]
                     },
                     {
-                      field_id: 142273, // Add job
+                      field_id: 1416915, // Add job
                       values: [{ value: leadData.job }]
                     }
                   ]
@@ -229,7 +229,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               status_id: statusId ? parseInt(statusId) : undefined,
               custom_fields_values: [
                 {
-                  field_id: 142993, // Phone field only
+                  field_id: 1112329, // Phone field only
                   values: [{ value: leadData.phone }]
                 }
               ]
