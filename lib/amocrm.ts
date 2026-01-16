@@ -70,11 +70,11 @@ async function createOrUpdateContact(config: AmoCRMConfig, lead: Lead): Promise<
         name: lead.name,
         custom_fields_values: [
           {
-            field_id: 142993, // Phone field ID (common in AmoCRM)
+            field_id: 1112329, // Phone field ID (common in AmoCRM)
             values: [{ value: lead.phone }],
           },
           {
-            field_id: 142995, // Position/Job field ID
+            field_id: 1416915, // Position/Job field ID
             values: [{ value: lead.job }],
           },
         ],
@@ -91,14 +91,14 @@ async function createOrUpdateContact(config: AmoCRMConfig, lead: Lead): Promise<
       const contactData: AmoCRMContact = {
         name: lead.name,
         custom_fields_values: [
-          {
-            field_id: 142993, // Phone field ID
-            values: [{ value: lead.phone }],
-          },
-          {
-            field_id: 142995, // Position/Job field ID
-            values: [{ value: lead.job }],
-          },
+        {
+          field_id: 1112329, // Phone field ID
+          values: [{ value: lead.phone }],
+        },
+        {
+          field_id: 1416915, // Position/Job field ID
+          values: [{ value: lead.job }],
+        },
         ],
       };
 
