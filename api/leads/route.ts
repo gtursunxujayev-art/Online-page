@@ -28,57 +28,96 @@ async function createOrUpdateContact(
   job: string
 ): Promise<number | null> {
   try {
-    const contactsUrl = `https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`;
+    console.log('=== CONTACT CREATION DEBUG ===');
+    console.log('Parameters:', { cleanSubdomain, name, phone, job });
+    console.log('Access token present:', !!accessToken);
     
-    // Search for existing contact by phone
-    const searchResponse = await fetch(`${contactsUrl}?query=${encodeURIComponent(phone)}`, {
+    const contactsUrl = `https://${cleanSubdomain}.amocrm.ru/api/v4/contacts`;
+    console.log('Contacts URL:', contactsUrl);
+    
+    // Search for existing contact by phone using filter by custom field
+    // amoCRM API v4 requires using filter with custom field ID
+    const filterPayload = {
+      filter: {
+        custom_fields_values: [
+          {
+            field_id: 1112329, // Phone field ID
+            values: [phone]
+          }
+        ]
+      }
+    };
+    
+    const searchUrl = `${contactsUrl}?filter=${encodeURIComponent(JSON.stringify(filterPayload.filter))}`;
+    console.log('Search URL with filter:', searchUrl);
+    console.log('Filter payload:', JSON.stringify(filterPayload, null, 2));
+    
+    const searchResponse = await fetch(searchUrl, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       }
     });
 
+    console.log('Contact search - Status:', searchResponse.status);
+    const searchResponseText = await searchResponse.text();
+    console.log('Contact search - Response:', searchResponseText);
+
     let contactId: number | null = null;
 
     if (searchResponse.ok) {
-      const searchResult = await searchResponse.json() as any;
-      const existingContacts = searchResult._embedded?.contacts;
-      
-      if (existingContacts && existingContacts.length > 0) {
-        // Update existing contact
-        contactId = existingContacts[0].id;
-        console.log('Found existing contact:', contactId);
+      try {
+        const searchResult = JSON.parse(searchResponseText) as any;
+        console.log('Search result parsed:', searchResult);
         
-        const updateData = {
-          name: name,
-          custom_fields_values: [
-            {
-              field_id: 1112329, // Phone field
-              values: [{ value: phone }]
+        const existingContacts = searchResult._embedded?.contacts;
+        console.log('Existing contacts found:', existingContacts?.length || 0);
+        
+        if (existingContacts && existingContacts.length > 0) {
+          // Update existing contact
+          contactId = existingContacts[0].id;
+          console.log('Found existing contact ID:', contactId);
+          
+          const updateData = {
+            name: name,
+            custom_fields_values: [
+              {
+                field_id: 1112329, // Phone field
+                values: [{ value: phone }]
+              },
+              {
+                field_id: 1416915, // Job field
+                values: [{ value: job }]
+              }
+            ]
+          };
+
+          console.log('Updating contact with data:', JSON.stringify(updateData, null, 2));
+          
+          const updateResponse = await fetch(`${contactsUrl}/${contactId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
             },
-            {
-              field_id: 1416915, // Job field
-              values: [{ value: job }]
-            }
-          ]
-        };
+            body: JSON.stringify(updateData)
+          });
 
-        const updateResponse = await fetch(`${contactsUrl}/${contactId}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(updateData)
-        });
+          const updateResponseText = await updateResponse.text();
+          console.log('Contact update - Status:', updateResponse.status);
+          console.log('Contact update - Response:', updateResponseText);
 
-        if (updateResponse.ok) {
-          console.log('✅ Contact updated successfully');
-        } else {
-          const updateText = await updateResponse.text();
-          console.error('Failed to update contact:', updateText);
+          if (updateResponse.ok) {
+            console.log('✅ Contact updated successfully');
+          } else {
+            console.error('❌ Failed to update contact');
+          }
         }
+      } catch (parseError) {
+        console.error('Failed to parse search response:', parseError);
       }
+    } else {
+      console.error('❌ Contact search failed');
     }
 
     // If no existing contact, create new one
@@ -98,6 +137,8 @@ async function createOrUpdateContact(
         ]
       };
 
+      console.log('Creating contact with data:', JSON.stringify([contactData], null, 2));
+      
       const createResponse = await fetch(contactsUrl, {
         method: 'POST',
         headers: {
@@ -107,17 +148,27 @@ async function createOrUpdateContact(
         body: JSON.stringify([contactData])
       });
 
+      const createResponseText = await createResponse.text();
+      console.log('Contact creation - Status:', createResponse.status);
+      console.log('Contact creation - Response:', createResponseText);
+
       if (createResponse.ok) {
-        const createResult = await createResponse.json() as any;
-        contactId = createResult._embedded?.contacts?.[0]?.id;
-        console.log('✅ Contact created successfully:', contactId);
+        try {
+          const createResult = JSON.parse(createResponseText) as any;
+          contactId = createResult._embedded?.contacts?.[0]?.id;
+          console.log('✅ Contact created successfully, ID:', contactId);
+        } catch (parseError) {
+          console.error('Failed to parse create response:', parseError);
+          return null;
+        }
       } else {
-        const createText = await createResponse.text();
-        console.error('Failed to create contact:', createText);
+        console.error('❌ Failed to create contact');
         return null;
       }
     }
 
+    console.log('=== CONTACT CREATION COMPLETE ===');
+    console.log('Final contact ID:', contactId);
     return contactId;
   } catch (error) {
     console.error('Error in createOrUpdateContact:', error);
@@ -172,7 +223,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const leadData = validationResult.data;
       
       // Log the lead submission (for debugging)
-      console.log('Lead submitted:', {
+      console.log('=== LEAD SUBMISSION DEBUG ===');
+      console.log('Lead data received:', {
         name: leadData.name,
         phone: leadData.phone,
         job: leadData.job,
@@ -190,6 +242,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
         timestamp: new Date().toISOString()
       });
+      
+      // Check which UTM fields have values
+      const utmFieldsWithValues = Object.entries({
+        utm_source: leadData.utm_source,
+        utm_medium: leadData.utm_medium,
+        utm_campaign: leadData.utm_campaign,
+        utm_content: leadData.utm_content,
+        utm_term: leadData.utm_term,
+        utm_referrer: leadData.utm_referrer,
+        roistat: leadData.roistat,
+        referrer: leadData.referrer,
+        openstat_service: leadData.openstat_service,
+      }).filter(([key, value]) => value).map(([key]) => key);
+      
+      console.log('UTM fields with values:', utmFieldsWithValues);
 
       // Try to sync with AmoCRM if configured
       let amoCRMResult = null;
@@ -309,7 +376,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             leadDataPayload.custom_fields_values = customFields;
           }
 
-          console.log('Creating lead:', JSON.stringify([leadDataPayload], null, 2));
+          console.log('=== LEAD CREATION PAYLOAD DEBUG ===');
+          console.log('Contact ID for attachment:', contactId);
+          console.log('Custom fields count:', customFields.length);
+          console.log('Custom fields:', customFields);
+          console.log('Full lead payload:', JSON.stringify([leadDataPayload], null, 2));
+          console.log('Lead creation URL:', `https://${cleanSubdomain}.amocrm.ru/api/v4/leads`);
           
           const leadResponse = await fetch(`https://${cleanSubdomain}.amocrm.ru/api/v4/leads`, {
             method: 'POST',
