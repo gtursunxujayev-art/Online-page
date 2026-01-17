@@ -5,6 +5,8 @@ import { z } from "zod";
 import session from "express-session";
 import MemoryStore from "memorystore";
 
+console.log("DEBUG: server/routes.ts module loaded");
+
 // Validation schema for lead submission
 // NOTE: .passthrough() allows extra fields (utm_*, fbclid, gclid, etc.) to remain on the parsed object
 const leadSchema = z.object({
@@ -358,6 +360,33 @@ export async function registerRoutes(
     let localLead: { id: string } | null = null;
     
     try {
+      // #region agent log - H1: Server type check
+      console.log("🚀 DEBUG: POST /api/leads handler STARTED - production server with AmoCRM");
+      console.log("DEBUG: Request body keys:", Object.keys(req.body));
+      console.log("DEBUG: Fetch available:", typeof fetch !== 'undefined' ? 'YES' : 'NO');
+      try {
+        if (typeof fetch !== 'undefined') {
+          fetch('http://127.0.0.1:7242/ingest/4a920a36-c98f-453c-b516-a583a00e839b',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              location:'server/routes.ts:357',
+              message:'POST /api/leads handler entered',
+              data:{serverType:'production', bodyKeys: Object.keys(req.body)},
+              timestamp:Date.now(),
+              sessionId:'debug-session',
+              runId:'run1',
+              hypothesisId:'H1'
+            })
+          }).catch(e => console.log("DEBUG: Fetch error for H1:", e.message));
+        } else {
+          console.log("DEBUG: Fetch API not available in this Node.js version");
+        }
+      } catch (e) {
+        console.log("DEBUG: Error in H1 instrumentation:", e.message);
+      }
+      // #endregion
+      
       // Validate request body
       const leadData = leadSchema.parse(req.body);
       
@@ -382,6 +411,10 @@ export async function registerRoutes(
       // Get AmoCRM credentials from environment variables
       const rawSubdomain = process.env.AMOCRM_SUBDOMAIN || "";
       const amoAccessToken = process.env.AMOCRM_ACCESS_TOKEN || "";
+      
+      // #region agent log - H2: Environment variables check
+      fetch('http://127.0.0.1:7242/ingest/4a920a36-c98f-453c-b516-a583a00e839b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:382',message:'Environment variables check',data:{rawSubdomain:rawSubdomain?`${rawSubdomain.substring(0,10)}...`:'empty',amoAccessToken:amoAccessToken?'***'+amoAccessToken.slice(-4):'empty',timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       
       // Detect domain type and extract subdomain
       let amoSubdomain = rawSubdomain;
@@ -447,6 +480,10 @@ export async function registerRoutes(
         },
         custom_fields_values: []
       };
+      
+      // #region agent log - H3: Field structure check
+      fetch('http://127.0.0.1:7242/ingest/4a920a36-c98f-453c-b516-a583a00e839b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:395',message:'Field structure check',data:{contactFields:amoLead._embedded.contacts[0].custom_fields_values,contactName:amoLead._embedded.contacts[0].name,leadTitle:amoLead.name,timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
 
       // Standard UTM-like fields we expect from the front-end
       const utmKeys = [
@@ -507,6 +544,10 @@ export async function registerRoutes(
       console.log("URL:", amoUrl);
       console.log("Request payload:", JSON.stringify([amoLead], null, 2));
       
+      // #region agent log - H4: API endpoint check
+      fetch('http://127.0.0.1:7242/ingest/4a920a36-c98f-453c-b516-a583a00e839b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:440',message:'API endpoint check',data:{amoUrl,hasSubdomain:!!amoSubdomain,hasAccessToken:!!amoAccessToken,endpointType:'complex',timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
+      
       const amoResponse = await fetch(amoUrl, {
         method: "POST",
         headers: {
@@ -520,6 +561,10 @@ export async function registerRoutes(
       console.log("=== AMOCRM API RESPONSE ===");
       console.log("Status:", amoResponse.status, amoResponse.statusText);
       console.log("Response:", responseText);
+      
+      // #region agent log - H5: API response check
+      fetch('http://127.0.0.1:7242/ingest/4a920a36-c98f-453c-b516-a583a00e839b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:460',message:'API response check',data:{status:amoResponse.status,statusText:amoResponse.statusText,responseLength:responseText.length,responsePreview:responseText.substring(0,200),timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
 
       if (!amoResponse.ok) {
         console.error("AmoCRM API error:", amoResponse.status, responseText);
