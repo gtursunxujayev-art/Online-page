@@ -159,47 +159,47 @@ export async function registerRoutes(
   // GET /api/kommo/pipelines - fetch pipelines from AmoCRM
   app.get("/api/kommo/pipelines", async (req, res) => {
     try {
-      const rawSubdomain = process.env.KOMMO_SUBDOMAIN || "";
-      const kommoAccessToken = process.env.KOMMO_ACCESS_TOKEN || "";
+      const rawSubdomain = process.env.AMOCRM_SUBDOMAIN || "";
+      const amoAccessToken = process.env.AMOCRM_ACCESS_TOKEN || "";
       
-      let kommoSubdomain = rawSubdomain;
-      let kommoDomain = "kommo.com";
+      let amoSubdomain = rawSubdomain;
+      let amoDomain = "kommo.com";
       
       if (rawSubdomain.includes("amocrm.ru")) {
-        kommoDomain = "amocrm.ru";
-        kommoSubdomain = rawSubdomain
+        amoDomain = "amocrm.ru";
+        amoSubdomain = rawSubdomain
           .replace(/^https?:\/\//, "")
           .replace(/\.amocrm\.ru.*$/, "")
           .trim();
       } else if (rawSubdomain.includes("amocrm.com")) {
-        kommoDomain = "amocrm.com";
-        kommoSubdomain = rawSubdomain
+        amoDomain = "amocrm.com";
+        amoSubdomain = rawSubdomain
           .replace(/^https?:\/\//, "")
           .replace(/\.amocrm\.com.*$/, "")
           .trim();
       } else if (rawSubdomain.includes("kommo.com")) {
-        kommoSubdomain = rawSubdomain
+        amoSubdomain = rawSubdomain
           .replace(/^https?:\/\//, "")
           .replace(/\.kommo\.com.*$/, "")
           .trim();
       } else {
-        kommoSubdomain = rawSubdomain.replace(/^https?:\/\//, "").trim();
+        amoSubdomain = rawSubdomain.replace(/^https?:\/\//, "").trim();
       }
 
-      if (!kommoSubdomain || !kommoAccessToken) {
-        return res.status(400).json({ error: "Kommo credentials not configured" });
+      if (!amoSubdomain || !amoAccessToken) {
+        return res.status(400).json({ error: "AmoCRM credentials not configured" });
       }
 
-      const pipelinesUrl = `https://${kommoSubdomain}.${kommoDomain}/api/v4/leads/pipelines`;
+      const pipelinesUrl = `https://${amoSubdomain}.${amoDomain}/api/v4/leads/pipelines`;
       const response = await fetch(pipelinesUrl, {
         headers: {
-          "Authorization": `Bearer ${kommoAccessToken}`
+          "Authorization": `Bearer ${amoAccessToken}`
         }
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Kommo pipelines error:", response.status, errorText);
+        console.error("AmoCRM pipelines error:", response.status, errorText);
         return res.status(response.status).json({ error: "Failed to fetch pipelines" });
       }
 
@@ -298,37 +298,37 @@ export async function registerRoutes(
         syncStatus: "pending"
       });
       
-      // Get Kommo credentials from environment variables
-      const rawSubdomain = process.env.KOMMO_SUBDOMAIN || "";
-      const kommoAccessToken = process.env.KOMMO_ACCESS_TOKEN || "";
+      // Get AmoCRM credentials from environment variables
+      const rawSubdomain = process.env.AMOCRM_SUBDOMAIN || "";
+      const amoAccessToken = process.env.AMOCRM_ACCESS_TOKEN || "";
       
       // Detect domain type and extract subdomain
-      let kommoSubdomain = rawSubdomain;
-      let kommoDomain = "kommo.com";
+      let amoSubdomain = rawSubdomain;
+      let amoDomain = "kommo.com";
       
       if (rawSubdomain.includes("amocrm.ru")) {
-        kommoDomain = "amocrm.ru";
-        kommoSubdomain = rawSubdomain
+        amoDomain = "amocrm.ru";
+        amoSubdomain = rawSubdomain
           .replace(/^https?:\/\//, "")
           .replace(/\.amocrm\.ru.*$/, "")
           .trim();
       } else if (rawSubdomain.includes("amocrm.com")) {
-        kommoDomain = "amocrm.com";
-        kommoSubdomain = rawSubdomain
+        amoDomain = "amocrm.com";
+        amoSubdomain = rawSubdomain
           .replace(/^https?:\/\//, "")
           .replace(/\.amocrm\.com.*$/, "")
           .trim();
       } else if (rawSubdomain.includes("kommo.com")) {
-        kommoSubdomain = rawSubdomain
+        amoSubdomain = rawSubdomain
           .replace(/^https?:\/\//, "")
           .replace(/\.kommo\.com.*$/, "")
           .trim();
       } else {
-        kommoSubdomain = rawSubdomain.replace(/^https?:\/\//, "").trim();
+        amoSubdomain = rawSubdomain.replace(/^https?:\/\//, "").trim();
       }
       
-      if (!kommoSubdomain || !kommoAccessToken) {
-        console.error("Kommo credentials not configured");
+      if (!amoSubdomain || !amoAccessToken) {
+        console.error("AmoCRM credentials not configured");
         await storage.updateLead(localLead.id, { syncStatus: "failed" });
         return res.status(502).json({ 
           success: false,
@@ -338,10 +338,11 @@ export async function registerRoutes(
         });
       }
 
-      // Prepare lead data for Kommo CRM with pipeline/stage and embedded contact
-      console.log("Building Kommo lead from incoming body:", JSON.stringify(leadData, null, 2));
+      // Prepare lead data for AmoCRM with pipeline/stage and embedded contact
+      console.log("Building AmoCRM lead from incoming body:", JSON.stringify(leadData, null, 2));
+      console.log("Validated leadData:", JSON.stringify(leadData, null, 2));
 
-      const kommoLead: any = {
+      const amoLead: any = {
         name: `Заявка с сайта: ${leadData.name}`,
         _embedded: {
           tags: [{ name: leadData.source || "website" }],
@@ -366,63 +367,47 @@ export async function registerRoutes(
 
       // Standard UTM-like fields we expect from the front-end
       const utmKeys = [
-        "utm_source",
-        "utm_medium",
-        "utm_campaign",
-        "utm_content",
-        "utm_term",
-        "utm_referrer",
-        "referrer",
-        "fbclid",
-        "gclid"
+        "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
+        "utm_referrer", "referrer", "fbclid", "gclid", "form", "page_url"
       ];
 
-      // Map incoming fields to Kommo field codes (UTM_* uppercase)
-      // If your Kommo uses different custom field codes, replace these codes accordingly
+      // Map incoming fields to AmoCRM field codes (UTM_* uppercase)
+      // If your AmoCRM uses different custom field codes, replace these codes accordingly
       for (const key of utmKeys) {
         const val = (leadData as any)[key] || (req.body && (req.body as any)[key]);
         if (val) {
-          // Kommo expects e.g. UTM_SOURCE etc
-          const fieldCode = key.toUpperCase(); // "utm_source" -> "UTM_SOURCE"
-          kommoLead.custom_fields_values.push({
-            field_code: fieldCode,
+          amoLead.custom_fields_values.push({
+            field_code: key.toUpperCase(),
             values: [{ value: val }]
           });
         }
       }
 
-      // Optional: include a human-friendly origin if present
-      if ((leadData as any).page_url) {
-        kommoLead.custom_fields_values.push({
-          field_code: "PAGE_URL",
-          values: [{ value: (leadData as any).page_url }]
-        });
-      }
       
       // Add pipeline and status if configured
       if (defaultPipelineId) {
-        kommoLead.pipeline_id = parseInt(defaultPipelineId);
+        amoLead.pipeline_id = parseInt(defaultPipelineId);
       }
       if (defaultStatusId) {
-        kommoLead.status_id = parseInt(defaultStatusId);
+        amoLead.status_id = parseInt(defaultStatusId);
       }
 
-      // Send to Kommo CRM API (complex leads endpoint for embedded contacts)
-      const kommoUrl = `https://${kommoSubdomain}.${kommoDomain}/api/v4/leads/complex`;
-      console.log("Sending lead to Kommo:", kommoUrl);
+      // Send to AmoCRM API (complex leads endpoint for embedded contacts)
+      const amoUrl = `https://${amoSubdomain}.${amoDomain}/api/v4/leads/complex`;
+      console.log("Sending lead to AmoCRM:", amoUrl);
       
-      const kommoResponse = await fetch(kommoUrl, {
+      const amoResponse = await fetch(amoUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${kommoAccessToken}`
+          "Authorization": `Bearer ${amoAccessToken}`
         },
-        body: JSON.stringify([kommoLead])
+        body: JSON.stringify([amoLead])
       });
 
-      if (!kommoResponse.ok) {
-        const errorText = await kommoResponse.text();
-        console.error("Kommo API error:", kommoResponse.status, errorText);
+      if (!amoResponse.ok) {
+        const errorText = await amoResponse.text();
+        console.error("AmoCRM API error:", amoResponse.status, errorText);
         await storage.updateLead(localLead.id, { syncStatus: "failed" });
         return res.status(502).json({ 
           success: false,
@@ -432,9 +417,9 @@ export async function registerRoutes(
         });
       }
 
-      const kommoData = await kommoResponse.json();
+      const kommoData = await amoResponse.json();
       const amoLeadId = kommoData._embedded?.leads?.[0]?.id;
-      console.log("Lead created in Kommo:", amoLeadId);
+      console.log("Lead created in AmoCRM:", amoLeadId);
       
       // Update local lead with AmoCRM ID and sync status
       await storage.updateLead(localLead.id, { 
