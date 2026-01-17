@@ -156,6 +156,87 @@ export async function registerRoutes(
     }
   });
 
+  // GET /api/debug/amocrm - diagnostic endpoint for AmoCRM configuration
+  app.get("/api/debug/amocrm", async (req, res) => {
+    try {
+      const rawSubdomain = process.env.AMOCRM_SUBDOMAIN || "";
+      const amoAccessToken = process.env.AMOCRM_ACCESS_TOKEN || "";
+      
+      let amoSubdomain = rawSubdomain;
+      let amoDomain = "kommo.com";
+      
+      if (rawSubdomain.includes("amocrm.ru")) {
+        amoDomain = "amocrm.ru";
+        amoSubdomain = rawSubdomain
+          .replace(/^https?:\/\//, "")
+          .replace(/\.amocrm\.ru.*$/, "")
+          .trim();
+      } else if (rawSubdomain.includes("amocrm.com")) {
+        amoDomain = "amocrm.com";
+        amoSubdomain = rawSubdomain
+          .replace(/^https?:\/\//, "")
+          .replace(/\.amocrm\.com.*$/, "")
+          .trim();
+      } else if (rawSubdomain.includes("kommo.com")) {
+        amoSubdomain = rawSubdomain
+          .replace(/^https?:\/\//, "")
+          .replace(/\.kommo\.com.*$/, "")
+          .trim();
+      } else {
+        amoSubdomain = rawSubdomain.replace(/^https?:\/\//, "").trim();
+      }
+
+      const config = {
+        rawSubdomain,
+        amoSubdomain,
+        amoDomain,
+        accessTokenConfigured: !!amoAccessToken,
+        fullUrl: `https://${amoSubdomain}.${amoDomain}`,
+        fieldMappings: {
+          contact: {
+            phone: { field_id: 1112329, field_code: "PHONE" },
+            position: { field_id: 1416915, field_code: "POSITION" }
+          },
+          utm: {
+            utm_source: { field_id: 1112343 },
+            utm_medium: { field_id: 1112339 },
+            utm_campaign: { field_id: 1112341 },
+            utm_content: { field_id: 1112337 },
+            utm_term: { field_id: 1112345 },
+            utm_referrer: { field_id: 1112347 },
+            referrer: { field_id: 1112351 }
+          }
+        },
+        samplePayload: {
+          name: "Заявка с сайта: Test User",
+          _embedded: {
+            tags: [{ name: "website" }],
+            contacts: [
+              {
+                name: "Test User",
+                first_name: "Test",
+                last_name: "User",
+                custom_fields_values: [
+                  { field_id: 1112329, values: [{ value: "+998901234567" }] },
+                  { field_id: 1416915, values: [{ value: "Developer" }] }
+                ]
+              }
+            ]
+          },
+          custom_fields_values: [
+            { field_id: 1112343, values: [{ value: "google" }] },
+            { field_code: "UTM_MEDIUM", values: [{ value: "cpc" }] }
+          ]
+        }
+      };
+
+      res.json(config);
+    } catch (error) {
+      console.error("Debug endpoint error:", error);
+      res.status(500).json({ error: "Debug endpoint failed" });
+    }
+  });
+
   // GET /api/kommo/pipelines - fetch pipelines from AmoCRM
   app.get("/api/kommo/pipelines", async (req, res) => {
     try {
@@ -349,13 +430,15 @@ export async function registerRoutes(
           contacts: [
             {
               name: leadData.name,
+              first_name: leadData.name.split(' ')[0] || leadData.name,
+              last_name: leadData.name.split(' ').slice(1).join(' ') || 'Not provided',
               custom_fields_values: [
                 {
-                  field_code: "PHONE",
+                  field_id: 1112329, // Phone field ID (common in AmoCRM)
                   values: [{ value: leadData.phone }]
                 },
                 {
-                  field_code: "POSITION",
+                  field_id: 1416915, // Position/Job field ID (common in AmoCRM)
                   values: [{ value: leadData.job }]
                 }
               ]
@@ -371,15 +454,41 @@ export async function registerRoutes(
         "utm_referrer", "referrer", "fbclid", "gclid", "form", "page_url"
       ];
 
-      // Map incoming fields to AmoCRM field codes (UTM_* uppercase)
-      // If your AmoCRM uses different custom field codes, replace these codes accordingly
+      // Map incoming fields to AmoCRM custom fields
+      // Try field_id first (numeric), fall back to field_code (string)
+      const fieldIdMap: Record<string, number> = {
+        "utm_source": 1112343,
+        "utm_medium": 1112339,
+        "utm_campaign": 1112341,
+        "utm_content": 1112337,
+        "utm_term": 1112345,
+        "utm_referrer": 1112347,
+        "referrer": 1112351,
+        "fbclid": 1112355, // Assuming a field ID for fbclid
+        "gclid": 1112357,  // Assuming a field ID for gclid
+        "form": 1112359,   // Assuming a field ID for form
+        "page_url": 1112361 // Assuming a field ID for page_url
+      };
+
       for (const key of utmKeys) {
         const val = (leadData as any)[key] || (req.body && (req.body as any)[key]);
         if (val) {
-          amoLead.custom_fields_values.push({
-            field_code: key.toUpperCase(),
-            values: [{ value: val }]
-          });
+          const fieldId = fieldIdMap[key];
+          if (fieldId) {
+            // Use field_id if we have a mapping
+            amoLead.custom_fields_values.push({
+              field_id: fieldId,
+              values: [{ value: val }]
+            });
+            console.log(`Mapped ${key} to field_id: ${fieldId}`);
+          } else {
+            // Fall back to field_code
+            amoLead.custom_fields_values.push({
+              field_code: key.toUpperCase(),
+              values: [{ value: val }]
+            });
+            console.log(`Mapped ${key} to field_code: ${key.toUpperCase()}`);
+          }
         }
       }
 
@@ -394,7 +503,9 @@ export async function registerRoutes(
 
       // Send to AmoCRM API (complex leads endpoint for embedded contacts)
       const amoUrl = `https://${amoSubdomain}.${amoDomain}/api/v4/leads/complex`;
-      console.log("Sending lead to AmoCRM:", amoUrl);
+      console.log("=== AMOCRM API REQUEST ===");
+      console.log("URL:", amoUrl);
+      console.log("Request payload:", JSON.stringify([amoLead], null, 2));
       
       const amoResponse = await fetch(amoUrl, {
         method: "POST",
@@ -405,9 +516,13 @@ export async function registerRoutes(
         body: JSON.stringify([amoLead])
       });
 
+      const responseText = await amoResponse.text();
+      console.log("=== AMOCRM API RESPONSE ===");
+      console.log("Status:", amoResponse.status, amoResponse.statusText);
+      console.log("Response:", responseText);
+
       if (!amoResponse.ok) {
-        const errorText = await amoResponse.text();
-        console.error("AmoCRM API error:", amoResponse.status, errorText);
+        console.error("AmoCRM API error:", amoResponse.status, responseText);
         await storage.updateLead(localLead.id, { syncStatus: "failed" });
         return res.status(502).json({ 
           success: false,
@@ -417,9 +532,31 @@ export async function registerRoutes(
         });
       }
 
-      const kommoData = await amoResponse.json();
+      let kommoData;
+      try {
+        kommoData = JSON.parse(responseText);
+        console.log("Parsed response data:", JSON.stringify(kommoData, null, 2));
+      } catch (parseError) {
+        console.error("Failed to parse AmoCRM response:", parseError);
+        await storage.updateLead(localLead.id, { syncStatus: "failed" });
+        return res.status(502).json({ 
+          success: false,
+          savedLocally: true,
+          message: "Ma'lumotingiz saqlandi, lekin CRM ga yuborilmadi",
+          syncError: "CRM javobini tahlil qilishda xatolik"
+        });
+      }
+
       const amoLeadId = kommoData._embedded?.leads?.[0]?.id;
+      const amoContactId = kommoData._embedded?.contacts?.[0]?.id;
+      console.log("=== AMOCRM API RESULT ===");
       console.log("Lead created in AmoCRM:", amoLeadId);
+      console.log("Contact created in AmoCRM:", amoContactId);
+      console.log("Full embedded data:", {
+        leads: kommoData._embedded?.leads,
+        contacts: kommoData._embedded?.contacts,
+        tags: kommoData._embedded?.tags
+      });
       
       // Update local lead with AmoCRM ID and sync status
       await storage.updateLead(localLead.id, { 
