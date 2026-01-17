@@ -6,12 +6,13 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 
 // Validation schema for lead submission
+// NOTE: .passthrough() allows extra fields (utm_*, fbclid, gclid, etc.) to remain on the parsed object
 const leadSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phone: z.string().regex(/^\+998\d{9}$/, "Phone must be in format +998XXXXXXXXX"),
   job: z.string().min(1, "Job is required"),
   source: z.string().optional(), // "registration" or "footer"
-});
+}).passthrough();
 
 // Extend session data
 declare module "express-session" {
@@ -279,6 +280,9 @@ export async function registerRoutes(
       // Validate request body
       const leadData = leadSchema.parse(req.body);
       
+      // DEBUG: log incoming data
+      console.log("Incoming /api/leads body:", JSON.stringify(req.body, null, 2));
+      
       // Get default pipeline/stage settings
       const defaultPipelineId = await storage.getSetting("default_pipeline_id");
       const defaultStatusId = await storage.getSetting("default_status_id");
@@ -335,31 +339,65 @@ export async function registerRoutes(
       }
 
       // Prepare lead data for Kommo CRM with pipeline/stage and embedded contact
-      const kommoLead: Record<string, unknown> = {
+      console.log("Building Kommo lead from incoming body:", JSON.stringify(leadData, null, 2));
+
+      const kommoLead: any = {
         name: `Заявка с сайта: ${leadData.name}`,
         _embedded: {
           tags: [{ name: leadData.source || "website" }],
-          contacts: [{
-            name: leadData.name,
-            custom_fields_values: [
-              {
-                field_code: "PHONE",
-                values: [{ value: leadData.phone }]
-              },
-              {
-                field_code: "POSITION",
-                values: [{ value: leadData.job }]
-              }
-            ]
-          }]
+          contacts: [
+            {
+              name: leadData.name,
+              custom_fields_values: [
+                {
+                  field_code: "PHONE",
+                  values: [{ value: leadData.phone }]
+                },
+                {
+                  field_code: "POSITION",
+                  values: [{ value: leadData.job }]
+                }
+              ]
+            }
+          ]
         },
-        custom_fields_values: [
-          {
-            field_code: "UTM_SOURCE",
-            values: [{ value: "site : online.najotnur.uz" }]
-          }
-        ]
+        custom_fields_values: []
       };
+
+      // Standard UTM-like fields we expect from the front-end
+      const utmKeys = [
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content",
+        "utm_term",
+        "utm_referrer",
+        "referrer",
+        "fbclid",
+        "gclid"
+      ];
+
+      // Map incoming fields to Kommo field codes (UTM_* uppercase)
+      // If your Kommo uses different custom field codes, replace these codes accordingly
+      for (const key of utmKeys) {
+        const val = (leadData as any)[key] || (req.body && (req.body as any)[key]);
+        if (val) {
+          // Kommo expects e.g. UTM_SOURCE etc
+          const fieldCode = key.toUpperCase(); // "utm_source" -> "UTM_SOURCE"
+          kommoLead.custom_fields_values.push({
+            field_code: fieldCode,
+            values: [{ value: val }]
+          });
+        }
+      }
+
+      // Optional: include a human-friendly origin if present
+      if ((leadData as any).page_url) {
+        kommoLead.custom_fields_values.push({
+          field_code: "PAGE_URL",
+          values: [{ value: (leadData as any).page_url }]
+        });
+      }
       
       // Add pipeline and status if configured
       if (defaultPipelineId) {
