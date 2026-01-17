@@ -12,8 +12,26 @@ import {
   type Setting,
 } from "@shared/schema";
 
-const client = postgres(process.env.DATABASE_URL!);
-export const db = drizzle(client);
+let client;
+let db;
+
+try {
+  if (!process.env.DATABASE_URL) {
+    console.warn("WARNING: DATABASE_URL not set. Using in-memory storage for development.");
+    // Create a mock client/db for development
+    client = null;
+    db = null;
+  } else {
+    client = postgres(process.env.DATABASE_URL);
+    db = drizzle(client);
+    console.log("Database connection established");
+  }
+} catch (error) {
+  console.error("Failed to initialize database:", error.message);
+  console.warn("Using in-memory storage for development");
+  client = null;
+  db = null;
+}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
