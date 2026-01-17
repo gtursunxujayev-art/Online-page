@@ -21,6 +21,10 @@ const leadSchema = z.object({
 // POST /api/leads
 app.post('/api/leads', async (req, res) => {
   try {
+    // #region agent log - H1: Dev server check
+    fetch('http://127.0.0.1:7242/ingest/4a920a36-c98f-453c-b516-a583a00e839b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/dev-api.ts:22',message:'POST /api/leads handler entered (DEV SERVER)',data:{serverType:'development',timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
+    
     const body = req.body;
     
     // Validate
