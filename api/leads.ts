@@ -26,36 +26,36 @@ function parseBody(body: unknown): unknown {
 }
 
 export default async function handler(req: Req, res: Res): Promise<void> {
-  setCors(res);
-  if (handleOptions(req, res)) return;
-
-  if (req.method === "GET") {
-    ok(res, {
-      ok: true,
-      endpoint: "/api/leads",
-      configuredPipelineId: getConfiguredPipelineId() ?? null,
-    });
-    return;
-  }
-
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-
-  const payload = parseBody(req.body);
-  if (!payload) {
-    badRequest(res, "Invalid JSON");
-    return;
-  }
-
-  const parsed = validateLeadPayload(payload);
-  if (!parsed.success) {
-    badRequest(res, parsed.error);
-    return;
-  }
-
   try {
+    setCors(res);
+    if (handleOptions(req, res)) return;
+
+    if (req.method === "GET") {
+      ok(res, {
+        ok: true,
+        endpoint: "/api/leads",
+        configuredPipelineId: getConfiguredPipelineId() ?? null,
+      });
+      return;
+    }
+
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Method not allowed" });
+      return;
+    }
+
+    const payload = parseBody(req.body);
+    if (!payload) {
+      badRequest(res, "Invalid JSON");
+      return;
+    }
+
+    const parsed = validateLeadPayload(payload);
+    if (!parsed.success) {
+      badRequest(res, parsed.error);
+      return;
+    }
+
     const result = await sendLeadToAmoCRM(parsed.data);
 
     ok(res, {
@@ -65,8 +65,8 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       pipelineId: parsed.data.pipelineId || getConfiguredPipelineId() || null,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
-    const details = error instanceof Error ? error.message : "Unknown CRM error";
+  } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : "Unknown server error";
     serverError(res, "Failed to send lead to CRM", details);
   }
 }
