@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useContent } from "@/lib/contentContext";
@@ -53,9 +54,9 @@ export default function Pricing() {
 
               <ul className="space-y-4 mb-8">
                 {(() => {
-                  const features = [];
+                  const features: ReactNode[] = [];
                   let inSpecialSection = false;
-                  let specialSectionItems = [];
+                  let specialSectionItems: string[] = [];
                   
                   for (let j = 0; j < plan.features.length; j++) {
                     const feat = plan.features[j];
@@ -80,7 +81,7 @@ export default function Pricing() {
                             <ul className="space-y-2 pl-4">
                               {specialSectionItems.slice(1).map((item, k) => (
                                 <li key={k} className="text-gray-300 text-sm flex items-start">
-                                  <span className="mr-2">•</span>
+                                  <span className="mr-2">*</span>
                                   <span>{item}</span>
                                 </li>
                               ))}
