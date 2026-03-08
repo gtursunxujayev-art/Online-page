@@ -4,12 +4,14 @@ import { useContent } from "@/lib/contentContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { buildToastErrorDescription } from "@/lib/apiErrors";
 
 export default function Footer() {
   const { content } = useContent();
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isDev = import.meta.env.DEV;
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
@@ -135,17 +137,9 @@ export default function Footer() {
       }
     } catch (error) {
       console.error("Error submitting lead:", error);
-      let description = "Ma'lumot yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.";
-      if (error instanceof Error) {
-        if (error.message.includes("timed out")) {
-          description = "Server javobi juda sekin. Iltimos qayta urinib ko'ring.";
-        } else if (error.message.includes("FUNCTION_INVOCATION_FAILED")) {
-          description = "Server funksiyasi ishlamayapti. Iltimos birozdan keyin qayta urinib ko'ring.";
-        }
-      }
       toast({
         title: "Xatolik",
-        description,
+        description: buildToastErrorDescription(error, isDev),
         variant: "destructive"
       });
       setIsSubmitting(false);
