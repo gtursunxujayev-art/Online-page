@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { buildToastErrorDescription } from "@/lib/apiErrors";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -156,30 +157,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           variant: "destructive",
         });
       }
-    } catch (error) {
-      if (isDev) {
-        console.error("Submit error:", error);
-      }
-
-      let errorMessage = "Noma'lum xatolik";
-
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        errorMessage = "Serverga ulanib bo'lmadi. API server ishlamayaptimi?";
-      } else if (error instanceof Error) {
-        if (error.message.includes("timed out")) {
-          errorMessage = "Server javobi juda sekin. Iltimos qayta urinib ko'ring.";
-        } else if (error.message.includes("FUNCTION_INVOCATION_FAILED")) {
-          errorMessage = "Server funksiyasi ishlamayapti. Iltimos birozdan keyin qayta urinib ko'ring.";
-        } else {
-          errorMessage = error.message;
-        }
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      }
+      } catch (error) {
+      if (isDev) console.error("Submit error:", error);
 
       toast({
         title: "Xatolik",
-        description: `Ma'lumot yuborishda xatolik yuz berdi: ${errorMessage}. Iltimos qaytadan urinib ko'ring.`,
+        description: buildToastErrorDescription(error, isDev),
         variant: "destructive",
       });
     } finally {
