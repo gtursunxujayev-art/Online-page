@@ -98,9 +98,12 @@ export default function Footer() {
         try {
           const text = await responseClone.text();
           console.error('Response text:', text);
+          if (text.includes("FUNCTION_INVOCATION_FAILED")) {
+            throw new Error("Server funksiyasi ishlamayapti. Iltimos birozdan keyin qayta urinib ko'ring.");
+          }
           throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
         } catch (textError) {
-          throw new Error('Failed to read response from server');
+          throw textError;
         }
       }
 
@@ -132,9 +135,17 @@ export default function Footer() {
       }
     } catch (error) {
       console.error("Error submitting lead:", error);
+      let description = "Ma'lumot yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.";
+      if (error instanceof Error) {
+        if (error.message.includes("timed out")) {
+          description = "Server javobi juda sekin. Iltimos qayta urinib ko'ring.";
+        } else if (error.message.includes("FUNCTION_INVOCATION_FAILED")) {
+          description = "Server funksiyasi ishlamayapti. Iltimos birozdan keyin qayta urinib ko'ring.";
+        }
+      }
       toast({
         title: "Xatolik",
-        description: "Ma'lumot yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
+        description,
         variant: "destructive"
       });
       setIsSubmitting(false);
