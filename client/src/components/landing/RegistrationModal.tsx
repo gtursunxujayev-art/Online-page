@@ -107,15 +107,14 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         if (isDev) {
           console.error("Failed to parse response:", parseError);
         }
-        try {
-          const text = await responseClone.text();
-          if (isDev) {
-            console.error("Response text:", text);
-          }
-          throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
-        } catch {
-          throw new Error("Failed to read response from server");
+        const text = await responseClone.text();
+        if (isDev) {
+          console.error("Response text:", text);
         }
+        if (text) {
+          throw new Error(`Invalid JSON response: ${text.substring(0, 300)}`);
+        }
+        throw new Error("Empty response from server");
       }
 
       if (!response.ok) {
