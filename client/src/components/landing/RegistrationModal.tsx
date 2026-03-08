@@ -112,6 +112,9 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           console.error("Response text:", text);
         }
         if (text) {
+          if (text.includes("FUNCTION_INVOCATION_FAILED")) {
+            throw new Error("Server funksiyasi ishlamayapti. Iltimos birozdan keyin qayta urinib ko'ring.");
+          }
           throw new Error(`Invalid JSON response: ${text.substring(0, 300)}`);
         }
         throw new Error("Empty response from server");
@@ -163,7 +166,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       if (error instanceof TypeError && error.message.includes("fetch")) {
         errorMessage = "Serverga ulanib bo'lmadi. API server ishlamayaptimi?";
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        if (error.message.includes("timed out")) {
+          errorMessage = "Server javobi juda sekin. Iltimos qayta urinib ko'ring.";
+        } else if (error.message.includes("FUNCTION_INVOCATION_FAILED")) {
+          errorMessage = "Server funksiyasi ishlamayapti. Iltimos birozdan keyin qayta urinib ko'ring.";
+        } else {
+          errorMessage = error.message;
+        }
       } else if (typeof error === "string") {
         errorMessage = error;
       }
