@@ -8,6 +8,7 @@ type AmoConfig = {
 };
 
 type JsonValue = Record<string, unknown> | Array<unknown>;
+const AMO_REQUEST_TIMEOUT_MS = 8000;
 
 function asPositiveInt(value: string | undefined): number | undefined {
   if (!value) return undefined;
@@ -50,14 +51,28 @@ async function amoRequest<T = JsonValue>(
   method: "GET" | "POST" | "PATCH",
   body?: JsonValue,
 ): Promise<T> {
-  const response = await fetch(`${config.baseUrl}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${config.accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), AMO_REQUEST_TIMEOUT_MS);
+  let response: Response;
+
+  try {
+    response = await fetch(`${config.baseUrl}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`AmoCRM ${method} ${path} timed out after ${AMO_REQUEST_TIMEOUT_MS}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const text = await response.text();
   let data: unknown = {};
