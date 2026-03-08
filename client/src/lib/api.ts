@@ -6,6 +6,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Helper function to build full API URL
 const buildApiUrl = (endpoint: string): string => {
+  if (!endpoint.startsWith("/")) {
+    throw new Error(`Invalid API endpoint: ${endpoint}`);
+  }
+
   // If we have a custom API URL, use it
   if (API_BASE_URL) {
     return `${API_BASE_URL}${endpoint}`;
@@ -17,7 +21,9 @@ const buildApiUrl = (endpoint: string): string => {
 // Utility function for direct fetch calls (used by components that don't use api.fetch)
 export const fetchWithBaseUrl = async (endpoint: string, options?: RequestInit): Promise<Response> => {
   const url = buildApiUrl(endpoint);
-  console.log(`Direct fetch to: ${url}`, { isDevelopment, API_BASE_URL });
+  if (isDevelopment) {
+    console.log(`Direct fetch to: ${url}`, { isDevelopment, API_BASE_URL });
+  }
   return fetch(url, options);
 };
 
@@ -25,7 +31,9 @@ export const api = {
   // Helper function to make API calls
   fetch: async (endpoint: string, options?: RequestInit) => {
     const url = buildApiUrl(endpoint);
-    console.log(`API call to: ${url}`, { isDevelopment, API_BASE_URL });
+    if (isDevelopment) {
+      console.log(`API call to: ${url}`, { isDevelopment, API_BASE_URL });
+    }
     
     try {
       const response = await fetch(url, {
