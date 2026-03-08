@@ -62,6 +62,10 @@ export function parseApiError(error: unknown): ParsedApiError {
 
 export function buildToastErrorDescription(error: unknown, isDev: boolean): string {
   const parsed = parseApiError(error);
-  if (!isDev) return parsed.userMessage;
+  const isDebugMode =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debug") === "1";
+
+  if (!isDev && !isDebugMode) return parsed.userMessage;
   return `${parsed.userMessage} [${parsed.code}] ${parsed.technicalMessage}`;
 }
