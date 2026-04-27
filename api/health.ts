@@ -1,4 +1,4 @@
-import { handleOptions, ok, setCors } from "../lib/http";
+import { handleOptions, ok, setCors } from "../lib/http.js";
 
 type Req = { method?: string };
 type Res = {
