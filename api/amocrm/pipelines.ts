@@ -1,5 +1,5 @@
-import { getAmoPipelines } from "../../lib/crm";
-import { handleOptions, serverError, setCors } from "../../lib/http";
+import { getAmoPipelines } from "../../lib/crm.js";
+import { handleOptions, serverError, setCors } from "../../lib/http.js";
 
 type Req = { method?: string };
 type Res = {
