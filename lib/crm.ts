@@ -1,4 +1,4 @@
-import type { LeadInput } from "./validation";
+import type { LeadInput } from "./validation.js";
 
 type AmoConfig = {
   baseUrl: string;
