@@ -1,6 +1,6 @@
-import { getConfiguredPipelineId, sendLeadToAmoCRM } from "../lib/crm";
-import { badRequest, handleOptions, ok, serverError, setCors } from "../lib/http";
-import { validateLeadPayload } from "../lib/validation";
+import { getConfiguredPipelineId, sendLeadToAmoCRM } from "../lib/crm.js";
+import { badRequest, handleOptions, ok, serverError, setCors } from "../lib/http.js";
+import { validateLeadPayload } from "../lib/validation.js";
 
 type Req = {
   method?: string;
