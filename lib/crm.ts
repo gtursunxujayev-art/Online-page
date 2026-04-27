@@ -186,7 +186,8 @@ export async function sendLeadToAmoCRM(lead: LeadInput): Promise<{ leadId: numbe
   const created = await amoRequest<Record<string, any>>(config, "/api/v4/leads/complex", "POST", [leadPayload]);
   const leadId = created?._embedded?.leads?.[0]?.id ?? null;
 
-  if (leadId && trackingText) {
+  if (leadId) {
+    const noteText = trackingText ? `Job: ${lead.job}\n${trackingText}` : `Job: ${lead.job}`;
     await amoRequest(
       config,
       `/api/v4/leads/${leadId}/notes`,
@@ -195,7 +196,7 @@ export async function sendLeadToAmoCRM(lead: LeadInput): Promise<{ leadId: numbe
         {
           note_type: "common",
           params: {
-            text: `Job: ${lead.job}\n${trackingText}`,
+            text: noteText,
           },
         },
       ],
