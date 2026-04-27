@@ -8,9 +8,6 @@
   "functions": {
     "api/**/*.ts": {
       "includeFiles": "lib/**"
-    },
-    "api/**/*.js": {
-      "includeFiles": "lib/**"
     }
   }
 }
