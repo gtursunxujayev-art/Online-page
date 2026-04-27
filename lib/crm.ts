@@ -114,7 +114,8 @@ function buildTrackingText(lead: LeadInput): string {
 }
 
 function buildCustomFields(lead: LeadInput): Array<Record<string, unknown>> {
-  const map: Array<{ key: keyof LeadInput; env: string; fallbackCode: string }> = [
+  const map: Array<{ key: keyof LeadInput; env: string; fallbackCode?: string }> = [
+    { key: "job", env: "AMOCRM_FIELD_ID_JOB" },
     { key: "utm_source", env: "AMOCRM_FIELD_ID_UTM_SOURCE", fallbackCode: "UTM_SOURCE" },
     { key: "utm_medium", env: "AMOCRM_FIELD_ID_UTM_MEDIUM", fallbackCode: "UTM_MEDIUM" },
     { key: "utm_campaign", env: "AMOCRM_FIELD_ID_UTM_CAMPAIGN", fallbackCode: "UTM_CAMPAIGN" },
@@ -137,7 +138,7 @@ function buildCustomFields(lead: LeadInput): Array<Record<string, unknown>> {
         field_id: fieldId,
         values: [{ value }],
       });
-    } else {
+    } else if (item.fallbackCode) {
       fields.push({
         field_code: item.fallbackCode,
         values: [{ value }],
