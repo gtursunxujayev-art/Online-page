@@ -1,5 +1,5 @@
-import { getContent, setContent } from "../lib/db";
-import { badRequest, handleOptions, ok, parseBearerToken, setCors, unauthorized } from "../lib/http";
+import { getContent, setContent } from "../lib/db.js";
+import { badRequest, handleOptions, ok, parseBearerToken, setCors, unauthorized } from "../lib/http.js";
 
 type Req = {
   method?: string;
