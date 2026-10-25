@@ -124,7 +124,7 @@ export default function Footer() {
         
         // Redirect to Telegram after a short delay
         setTimeout(() => {
-          window.open('https://t.me/najotnurnotiqlikmarkazi', '_blank');
+          window.open('https://t.me/+bg6bB9KZ-C0wZTgy', '_blank');
         }, 1500);
         
       } else {
