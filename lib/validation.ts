@@ -2,6 +2,7 @@ export type LeadInput = {
   name: string;
   phone: string;
   job: string;
+  contactTime?: string;
   source?: string;
   pipelineId?: number;
   statusId?: number;
@@ -54,6 +55,7 @@ export function validateLeadPayload(payload: unknown): ValidationResult {
     name,
     phone,
     job,
+    contactTime: sanitizeOptional(body.contactTime, 64),
     source: sanitizeOptional(body.source, 64) || "website",
     pipelineId: Number.isFinite(maybePipeline) ? maybePipeline : undefined,
     statusId: Number.isFinite(maybeStatus) ? maybeStatus : undefined,
