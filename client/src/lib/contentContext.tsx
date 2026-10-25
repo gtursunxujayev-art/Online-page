@@ -143,7 +143,7 @@ export const defaultContent: ContentState = {
       { title: "30 Sekund Qoidasi", desc: "Fikrni 30 sekundda aniq, lo‘nda va ta’sirchan ifodalash metodlari." },
       { title: "Storytelling", desc: "Empatiya uyg‘otish, hikoya qilish va auditoriyani ishontirish san'ati." }
     ],
-    statCount: "4000+",
+    statCount: "5500+",
     statLabel: "Muvaffaqiyatli bitiruvchilar"
   },
   program: {
@@ -163,7 +163,7 @@ export const defaultContent: ContentState = {
     description: "Sizga o‘z sohasining eng kuchli mutaxassislari ustozlik qiladi.",
     items: [
       { name: "Najot Nur", role: "Bosh Mentor", bio: "13+ yil tajribaga ega notiq. Nutq eksperti. Ko'plab konferensiyalar spikeri. 5000+ o'quvchilarni o'qitgan.", image: "https://i.ibb.co/rKdWnFw8/photo-2025-12-06-18-49-59.jpg" },
-      { name: "Islom Qoraboyev", role: "Qo'shimcha Mentor", bio: "7+ yillik tajribaga ega O'zbekiston 24 telekanali boshlovchisi.", image: "https://i.ibb.co/b4Cwqnz/photo-2025-12-06-18-51-08.jpg" }
+      { name: "Islom Qoraboyev", role: "Qo'shimcha Mentor", bio: "7+ yillik tajribaga ega O'zbekiston 24 telekanali boshlovchisi.", image: "/islom-qoraboyev.webp" }
     ]
   },
   testimonials: {
