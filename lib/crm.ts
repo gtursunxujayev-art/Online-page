@@ -188,7 +188,10 @@ export async function sendLeadToAmoCRM(lead: LeadInput): Promise<{ leadId: numbe
   const leadId = created?._embedded?.leads?.[0]?.id ?? null;
 
   if (leadId) {
-    const noteText = trackingText ? `Job: ${lead.job}\n${trackingText}` : `Job: ${lead.job}`;
+    const noteLines = [`Job: ${lead.job}`];
+    if (lead.contactTime) noteLines.push(`Bog'lanish vaqti: ${lead.contactTime}`);
+    if (trackingText) noteLines.push(trackingText);
+    const noteText = noteLines.join("\n");
     await amoRequest(
       config,
       `/api/v4/leads/${leadId}/notes`,
