@@ -62,6 +62,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       success: true,
       message: "Lead sent to CRM",
       leadId: result.leadId,
+      duplicate: result.duplicate,
       pipelineId: parsed.data.pipelineId || getConfiguredPipelineId() || null,
       timestamp: new Date().toISOString(),
     });
