@@ -148,10 +148,70 @@ function buildCustomFields(lead: LeadInput): Array<Record<string, unknown>> {
   return fields;
 }
 
-export async function sendLeadToAmoCRM(lead: LeadInput): Promise<{ leadId: number | null }> {
+// amoCRM system statuses for closed leads (won / lost)
+const AMO_CLOSED_STATUS_IDS = new Set([142, 143]);
+
+function digitsOnly(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+// Finds an open (not won/lost) lead belonging to a contact with the same phone.
+// Lookup failures are swallowed on purpose: a missed duplicate is better than a lost lead.
+async function findOpenLeadByPhone(config: AmoConfig, phone: string): Promise<number | null> {
+  const digits = digitsOnly(phone);
+  if (!digits) return null;
+
+  try {
+    const contactsRes = await amoRequest<Record<string, any>>(
+      config,
+      `/api/v4/contacts?query=${encodeURIComponent(digits.slice(-9))}&with=leads&limit=50`,
+      "GET",
+    );
+    const contacts: Array<Record<string, any>> = contactsRes?._embedded?.contacts ?? [];
+
+    const leadIds = new Set<number>();
+    for (const contact of contacts) {
+      const phoneField = (contact.custom_fields_values ?? []).find(
+        (f: Record<string, any>) => f.field_code === "PHONE",
+      );
+      const samePhone = (phoneField?.values ?? []).some(
+        (v: Record<string, any>) => digitsOnly(String(v.value ?? "")).endsWith(digits.slice(-9)),
+      );
+      if (!samePhone) continue;
+      for (const l of contact._embedded?.leads ?? []) leadIds.add(l.id);
+    }
+    if (leadIds.size === 0) return null;
+
+    const filter = [...leadIds].map((id, i) => `filter[id][${i}]=${id}`).join("&");
+    const leadsRes = await amoRequest<Record<string, any>>(config, `/api/v4/leads?${filter}`, "GET");
+    const leads: Array<Record<string, any>> = leadsRes?._embedded?.leads ?? [];
+
+    const open = leads
+      .filter((l) => !l.closed_at && !AMO_CLOSED_STATUS_IDS.has(l.status_id))
+      .sort((a, b) => b.created_at - a.created_at);
+    return open[0]?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function sendLeadToAmoCRM(
+  lead: LeadInput,
+): Promise<{ leadId: number | null; duplicate: boolean }> {
   const config = getAmoConfig();
   const customFields = buildCustomFields(lead);
   const trackingText = buildTrackingText(lead);
+
+  const existingLeadId = await findOpenLeadByPhone(config, lead.phone);
+  if (existingLeadId) {
+    const noteLines = [`Takroriy ariza (${lead.name}, ${lead.phone})`, `Job: ${lead.job}`];
+    if (lead.contactTime) noteLines.push(`Bog'lanish vaqti: ${lead.contactTime}`);
+    if (trackingText) noteLines.push(trackingText);
+    await amoRequest(config, `/api/v4/leads/${existingLeadId}/notes`, "POST", [
+      { note_type: "common", params: { text: noteLines.join("\n") } },
+    ]);
+    return { leadId: existingLeadId, duplicate: true };
+  }
 
   const pipelineId = lead.pipelineId || config.pipelineId;
   const statusId = lead.statusId || config.statusId;
@@ -207,7 +267,7 @@ export async function sendLeadToAmoCRM(lead: LeadInput): Promise<{ leadId: numbe
     );
   }
 
-  return { leadId };
+  return { leadId, duplicate: false };
 }
 
 export function getConfiguredPipelineId(): number | undefined {
