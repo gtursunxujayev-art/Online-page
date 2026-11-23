@@ -195,6 +195,35 @@ async function findOpenLeadByPhone(config: AmoConfig, phone: string): Promise<nu
   }
 }
 
+const DEFAULT_STATUS_NAME = "Yangi lid";
+const statusIdCache = new Map<string, number>();
+
+// Resolves a pipeline stage by its name so the stage id doesn't have to be copied by hand.
+// Returns undefined on any failure; the caller then falls back to amoCRM's default stage.
+async function findStatusIdByName(config: AmoConfig, pipelineId: number): Promise<number | undefined> {
+  const name = (process.env.AMOCRM_STATUS_NAME || DEFAULT_STATUS_NAME).trim().toLowerCase();
+  const cacheKey = `${pipelineId}:${name}`;
+  const cached = statusIdCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const res = await amoRequest<Record<string, any>>(
+      config,
+      `/api/v4/leads/pipelines/${pipelineId}/statuses`,
+      "GET",
+    );
+    const statuses: Array<Record<string, any>> = res?._embedded?.statuses ?? [];
+    const match = statuses.find((s) => String(s.name ?? "").trim().toLowerCase() === name);
+    if (match?.id) {
+      statusIdCache.set(cacheKey, match.id);
+      return match.id;
+    }
+  } catch {
+    // fall through
+  }
+  return undefined;
+}
+
 export async function sendLeadToAmoCRM(
   lead: LeadInput,
 ): Promise<{ leadId: number | null; duplicate: boolean }> {
@@ -214,7 +243,10 @@ export async function sendLeadToAmoCRM(
   }
 
   const pipelineId = lead.pipelineId || config.pipelineId;
-  const statusId = lead.statusId || config.statusId;
+  const statusId =
+    lead.statusId ||
+    config.statusId ||
+    (pipelineId ? await findStatusIdByName(config, pipelineId) : undefined);
 
   const leadPayload: Record<string, unknown> = {
     name: `Lead from website: ${lead.name}`,
